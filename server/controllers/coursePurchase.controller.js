@@ -5,6 +5,21 @@ import { User } from "../models/user.model.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+const getFrontendBaseUrl = (req) => {
+  const requestOrigin = req.headers.origin;
+
+  if (typeof requestOrigin === "string" && /^https?:\/\//i.test(requestOrigin)) {
+    return requestOrigin.replace(/\/$/, "");
+  }
+
+  const configuredOrigin = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .find(Boolean);
+
+  return configuredOrigin.replace(/\/$/, "");
+};
+
 const finalizePurchase = async (sessionId, amountTotal) => {
   const purchase = await CoursePurchase.findOne({
     paymentId: sessionId,
@@ -56,6 +71,7 @@ export const createCheckoutSession = async (req, res) => {
   try {
     const userId = req.id;
     const { courseId } = req.body;
+    const frontendBaseUrl = getFrontendBaseUrl(req);
 
     const course = await Course.findById(courseId);
     if (!course) {
@@ -89,8 +105,8 @@ export const createCheckoutSession = async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `http://localhost:5173/course-detail/${courseId}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `http://localhost:5173/course-detail/${courseId}`,
+      success_url: `${frontendBaseUrl}/course-detail/${courseId}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${frontendBaseUrl}/course-detail/${courseId}`,
       metadata: {
         courseId: courseId,
         userId: userId,
@@ -115,6 +131,10 @@ export const createCheckoutSession = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create checkout session.",
+    });
   }
 };
 
