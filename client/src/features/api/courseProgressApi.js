@@ -1,0 +1,158 @@
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+const COURSE_PURCHASE_API = "http://localhost:8080/api/v1/progress";
+export const courseProgressApi = createApi({
+  reducerPath: "courseProgressApi",
+  tagTypes: ["LectureComments", "CommentNotifications"],
+  baseQuery: fetchBaseQuery({
+    baseUrl: COURSE_PURCHASE_API,
+    credentials: "include",
+  }),
+  endpoints: (builder) => ({
+    getCourseProgress: builder.query({
+      query: (courseId) => ({
+        url: `/${courseId}`,
+        method: "GET",
+      }),
+    }),
+    updateLectureProgress: builder.mutation({
+      query: ({ courseId, lectureId }) => ({
+        url: `/${courseId}/lecture/${lectureId}/view`,
+        method: "POST",
+      }),
+    }),
+    getCommentNotifications: builder.query({
+      query: () => ({
+        url: "/comment-notifications",
+        method: "GET",
+      }),
+      providesTags: ["CommentNotifications"],
+    }),
+    getLectureComments: builder.query({
+      query: ({ courseId, lectureId }) => ({
+        url: `/${courseId}/lecture/${lectureId}/comments`,
+        method: "GET",
+      }),
+      providesTags: (result, error, { lectureId }) => [{ type: "LectureComments", id: lectureId }],
+    }),
+    addLectureComment: builder.mutation({
+      query: ({ courseId, lectureId, text, parentCommentId = null }) => ({
+        url: `/${courseId}/lecture/${lectureId}/comments`,
+        method: "POST",
+        body: { text, parentCommentId },
+      }),
+      invalidatesTags: (result, error, { lectureId }) => [
+        { type: "LectureComments", id: lectureId },
+        "CommentNotifications",
+      ],
+    }),
+    deleteLectureComment: builder.mutation({
+      query: ({ courseId, lectureId, commentId }) => ({
+        url: `/${courseId}/lecture/${lectureId}/comments/${commentId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (result, error, { lectureId }) => [
+        { type: "LectureComments", id: lectureId },
+        "CommentNotifications",
+      ],
+    }),
+    togglePinLectureComment: builder.mutation({
+      query: ({ courseId, lectureId, commentId }) => ({
+        url: `/${courseId}/lecture/${lectureId}/comments/${commentId}/pin`,
+        method: "PATCH",
+      }),
+      async onQueryStarted({ courseId, lectureId, commentId }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          courseProgressApi.util.updateQueryData(
+            "getLectureComments",
+            { courseId, lectureId },
+            (draft) => {
+              if (!draft?.comments?.length) {
+                return;
+              }
+
+              const targetComment = draft.comments.find(
+                (comment) => comment._id === commentId
+              );
+
+              if (!targetComment || targetComment.parentCommentId) {
+                return;
+              }
+
+              if (targetComment.isPinned) {
+                targetComment.isPinned = false;
+                targetComment.pinnedAt = null;
+                targetComment.pinnedByUserId = null;
+                return;
+              }
+
+              draft.comments.forEach((comment) => {
+                if (comment.parentCommentId) {
+                  return;
+                }
+
+                comment.isPinned = false;
+                comment.pinnedAt = null;
+                comment.pinnedByUserId = null;
+              });
+
+              targetComment.isPinned = true;
+              targetComment.pinnedAt = new Date().toISOString();
+            }
+          )
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
+    }),
+    completeCourse: builder.mutation({
+        query: (courseId) => ({
+            url: `/${courseId}/complete`,
+            method: "POST",
+        }),
+    }),
+    incompleteCourse: builder.mutation({
+        query: (courseId) => ({
+            url: `/${courseId}/incomplete`,
+            method: "POST",
+        }),
+    }),
+    submitQuizResult: builder.mutation({
+      query: ({ courseId, lectureId, score, totalQuestions }) => ({
+        url: `/${courseId}/lecture/${lectureId}/quiz-result`,
+        method: "POST",
+        body: { score, totalQuestions },
+      }),
+    }),
+    getCourseQuizResults: builder.query({
+      query: (courseId) => ({
+        url: `/admin/${courseId}/quiz-results`,
+        method: "GET",
+      }),
+    }),
+    getQuizResultHistory: builder.query({
+      query: (resultId) => ({
+        url: `/admin/quiz-result/${resultId}/history`,
+        method: "GET",
+      }),
+    }),
+  }),
+});
+export const {
+useGetCourseProgressQuery,
+useUpdateLectureProgressMutation,
+useGetCommentNotificationsQuery,
+useGetLectureCommentsQuery,
+useAddLectureCommentMutation,
+useDeleteLectureCommentMutation,
+useTogglePinLectureCommentMutation,
+useCompleteCourseMutation,
+useIncompleteCourseMutation,
+useSubmitQuizResultMutation,
+useGetCourseQuizResultsQuery,
+useLazyGetQuizResultHistoryQuery,
+} = courseProgressApi;

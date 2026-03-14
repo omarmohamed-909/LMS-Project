@@ -1,0 +1,300 @@
+import Stripe from "stripe";
+import { Course } from "../models/course.model.js";
+import { CoursePurchase } from "../models/coursePurchase.model.js";
+import { User } from "../models/user.model.js";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+const finalizePurchase = async (sessionId, amountTotal) => {
+  const purchase = await CoursePurchase.findOne({
+    paymentId: sessionId,
+  }).populate({ path: "courseId" });
+
+  if (!purchase) {
+    throw new Error("Purchase not found!");
+  }
+
+  if (purchase.status !== "completed") {
+    if (amountTotal) {
+      purchase.amount = amountTotal / 100;
+    }
+    purchase.status = "completed";
+
+    await purchase.save();
+
+    await User.findByIdAndUpdate(
+      purchase.userId,
+      { $addToSet: { enrolledCourses: purchase.courseId._id } },
+      { new: true }
+    );
+
+    await Course.findByIdAndUpdate(
+      purchase.courseId._id,
+      { $addToSet: { enrolledStudents: purchase.userId } },
+      { new: true }
+    );
+  }
+
+  return purchase;
+};
+
+const reconcilePendingPurchase = async (purchase) => {
+  if (!purchase || purchase.status === "completed") {
+    return purchase;
+  }
+
+  const session = await stripe.checkout.sessions.retrieve(purchase.paymentId);
+
+  if (session?.payment_status === "paid") {
+    return finalizePurchase(session.id, session.amount_total);
+  }
+
+  return purchase;
+};
+
+export const createCheckoutSession = async (req, res) => {
+  try {
+    const userId = req.id;
+    const { courseId } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({
+        message: "Course not found!",
+      });
+    }
+
+    // Create a new course purchase record
+    const newPurchase = new CoursePurchase({
+      courseId,
+      userId,
+      amount: course.coursePrice,
+      status: "pending",
+    });
+
+    // Create a stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "egp",
+            product_data: {
+              name: course.courseTitle,
+              images: [course.courseThumbnail],
+            },
+            unit_amount: course.coursePrice * 100,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `http://localhost:5173/course-detail/${courseId}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `http://localhost:5173/course-detail/${courseId}`,
+      metadata: {
+        courseId: courseId,
+        userId: userId,
+      },
+      shipping_address_collection: {
+        allowed_countries: ["EG"],
+      },
+    });
+    if (!session.url) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Error while creating session" });
+    }
+
+    //save the purchase record
+    newPurchase.paymentId = session.id;
+    await newPurchase.save();
+
+    return res.status(200).json({
+      success: true,
+      url: session.url, //return the stripe url
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const stripeWebhook = async (req, res) => {
+  let event;
+
+  try {
+    const secret = process.env.WEBHOOK_ENDPOINT_SECRET;
+    const signature = req.headers["stripe-signature"];
+
+    event = stripe.webhooks.constructEvent(req.body, signature, secret);
+  } catch (error) {
+    console.error("webhook error", error.message);
+    return res.status(400).send(`webhook error: ${error.message}`);
+  }
+
+  // Handle the checkout session completed event
+  if (event.type === "checkout.session.completed") {
+    try {
+      const session = event.data.object;
+      await finalizePurchase(session.id, session.amount_total);
+    } catch (error) {
+      console.error("Error handling event", error);
+      return res.status(400).json({ message: "Internal server error" });
+    }
+  }
+  res.status(200).send();
+};
+
+export const verifyCheckoutSession = async (req, res) => {
+  try {
+    const { sessionId, courseId } = req.body;
+    const userId = req.id;
+
+    if (!sessionId || !courseId) {
+      return res.status(400).json({
+        message: "Session id and course id are required.",
+      });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (!session || session.payment_status !== "paid") {
+      return res.status(400).json({
+        message: "Payment has not been completed yet.",
+      });
+    }
+
+    if (session.metadata?.courseId !== courseId || session.metadata?.userId !== userId) {
+      return res.status(403).json({
+        message: "This checkout session does not belong to the current user.",
+      });
+    }
+
+    await finalizePurchase(session.id, session.amount_total);
+
+    return res.status(200).json({
+      success: true,
+      message: "Purchase verified successfully.",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Failed to verify purchase.",
+    });
+  }
+};
+export const getCourseDetailWithPurchaseStatus = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.id;
+
+    const currentUser = await User.findById(userId).select("enrolledCourses");
+
+    const course = await Course.findById(courseId)
+      .populate({ path: "creator" })
+      .populate({ path: "lectures" });
+
+    let purchased = await CoursePurchase.findOne({
+      userId,
+      courseId,
+      status: "completed",
+    });
+
+    if (!purchased) {
+      const pendingPurchase = await CoursePurchase.findOne({
+        userId,
+        courseId,
+        status: "pending",
+      }).sort({ createdAt: -1 });
+
+      if (pendingPurchase) {
+        const reconciledPurchase = await reconcilePendingPurchase(pendingPurchase);
+        if (reconciledPurchase?.status === "completed") {
+          purchased = reconciledPurchase;
+        }
+      }
+    }
+
+    if (!course) {
+      return res.status(404).json({
+        message: "Course not found!",
+      });
+    }
+
+    const courseData = course.toObject();
+    const lectures = courseData.lectures || [];
+    const hasExplicitAdminPreviewConfig = lectures.some(
+      (lecture) => typeof lecture.previewEnabledByAdmin === "boolean"
+    );
+    const allLegacyLecturesMarkedFree =
+      lectures.length > 1 && lectures.every((lecture) => Boolean(lecture.isPreviewFree));
+
+    courseData.lectures = lectures.map((lecture, index) => {
+      let isPreviewFree = false;
+
+      if (typeof lecture.previewEnabledByAdmin === "boolean") {
+        isPreviewFree = Boolean(lecture.previewEnabledByAdmin && lecture.isPreviewFree);
+      } else if (!hasExplicitAdminPreviewConfig) {
+        if (allLegacyLecturesMarkedFree) {
+          // Legacy safety: the old purchase bug could mark all lectures as free.
+          // In that case keep only the first preview unlocked until the instructor resaves.
+          isPreviewFree = index === 0;
+        } else {
+          // Legacy admin-configured free previews should continue to work.
+          isPreviewFree = Boolean(lecture.isPreviewFree);
+        }
+      }
+
+      return {
+        ...lecture,
+        isPreviewFree,
+      };
+    });
+
+    const isFreeCourse = !course.coursePrice || course.coursePrice <= 0;
+    const hasManualAccess = currentUser?.enrolledCourses?.some(
+      (enrolledCourseId) => enrolledCourseId.toString() === courseId
+    ) ?? false;
+    const hasAccess = isFreeCourse || !!purchased || hasManualAccess;
+
+    return res.status(200).json({
+      course: courseData,
+      purchased: !!purchased, // true if purchased , false otherwise
+      hasAccess,
+      isFreeCourse,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getAllPurchasedCourse = async (_, res) => {
+  try {
+    const pendingPurchases = await CoursePurchase.find({
+      status: "pending",
+    });
+
+    await Promise.all(
+      pendingPurchases.map(async (purchase) => {
+        try {
+          await reconcilePendingPurchase(purchase);
+        } catch (error) {
+          console.log(error);
+        }
+      })
+    );
+
+    const purchasedCourse = await CoursePurchase.find({
+      status: "completed",
+    }).populate("courseId");
+    if (!purchasedCourse) {
+      return res.status(404).json({
+        purchasedCourse:[],
+      });
+    }
+    return res.status(200).json({
+      purchasedCourse,
+    });
+  } catch (error) {
+    cosnole.log(error);
+  }
+};
