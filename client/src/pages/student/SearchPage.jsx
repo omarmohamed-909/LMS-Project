@@ -26,10 +26,10 @@ const SearchPage = () => {
     setSortByPrice(price);
   }
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8">
-      <div className="flex flex-col md:flex-row gap-10">
+    <div className="mx-auto max-w-7xl px-4 py-4 md:px-8 md:py-8">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10">
         <Filter handleFilterChange={handleFilterChange}/>
-        <div className="flex-1">
+        <div className="flex-1 space-y-4">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, idx) => (
               <CourseSkeleton key={idx} />
@@ -66,22 +66,21 @@ const CourseNotFound = () => {
 
 const CourseSkeleton = () => {
   return (
-    <div className="flex-1 flex flex-col md:flex-row justify-between border-b border-gray-300 py-4">
-      <div className="h-32 w-full md:w-64">
-        <Skeleton className="h-full w-full object-cover" />
-      </div>
-
-      <div className="flex flex-col gap-2 flex-1 px-4">
-        <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-4 w-1/2" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-1/3" />
+    <div className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 md:p-4">
+      <div className="flex flex-col gap-4 md:flex-row">
+        <div className="h-40 w-full md:h-32 md:w-56">
+          <Skeleton className="h-full w-full rounded-2xl object-cover" />
         </div>
-        <Skeleton className="h-6 w-20 mt-2" />
-      </div>
 
-      <div className="flex flex-col items-end justify-between mt-4 md:mt-0">
-        <Skeleton className="h-6 w-12" />
+        <div className="flex flex-1 flex-col gap-2">
+          <div className="flex items-start justify-between gap-3">
+            <Skeleton className="h-6 w-2/3" />
+            <Skeleton className="h-6 w-16" />
+          </div>
+          <Skeleton className="h-4 w-4/5" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="mt-2 h-6 w-24" />
+        </div>
       </div>
     </div>
   );
