@@ -23,11 +23,16 @@ app.use("/api/v1/purchase/webhook", express.raw({ type: "application/json" }))
 app.use(express.json())
 app.use(cookieParser())
 
+const envOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+
 const allowedOrigins = [
-    process.env.FRONTEND_URL,
+    ...envOrigins,
     "https://lms-project-jczd.vercel.app",
     "http://localhost:5173"
-].filter(Boolean)
+]
 
 const isAllowedVercelPreview = (origin) =>
     /^https:\/\/lms-project-[a-z0-9-]+\.vercel\.app$/i.test(origin)
@@ -39,6 +44,8 @@ app.use(cors({
         if (allowedOrigins.includes(origin) || isAllowedVercelPreview(origin)) return callback(null, true)
         return callback(new Error("Not allowed by CORS"))
     },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
 }))
 

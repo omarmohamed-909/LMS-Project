@@ -2,6 +2,7 @@ import { json } from "express";
 import jwt from "jsonwebtoken";
 
 export const generateToken = (res, user, message) => {
+  const isProduction = process.env.NODE_ENV === "production";
   const safeUser = typeof user?.toObject === "function" ? user.toObject() : { ...user };
   delete safeUser.password;
 
@@ -13,11 +14,14 @@ export const generateToken = (res, user, message) => {
     .status(200)
     .cookie("token", token, {
       httpOnly: true,
-      sameSite: "strict",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
       maxAge: 24 * 60 * 60 * 1000, //1 day
     }).json({
         success:true,
         message,
+      token,
       user:safeUser
     });
 };

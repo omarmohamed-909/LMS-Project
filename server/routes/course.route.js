@@ -13,7 +13,7 @@ router.route("/published-courses").get(getPublishedCourse);
 router.route("/admin/manageable-courses").get(isAuthenticated, authorizeRoles("instructor"), getAdminManageableCourses);
 router.route("/").get(isAuthenticated,getCreatorCourses);
 router.route("/:courseId").put(isAuthenticated,upload.single("courseThumbnail"),editCourse);
-router.route("/:courseId").get(isAuthenticated,getCourseById);
+router.route("/:courseId").get(getCourseById);
 router.route("/:courseId/lecture").post(isAuthenticated, createLecture);
 router.route("/:courseId/lecture").get(isAuthenticated, getCourseLecture);
 router.route("/:courseId/lecture/:lectureId/reorder").post(isAuthenticated, reorderLecture);

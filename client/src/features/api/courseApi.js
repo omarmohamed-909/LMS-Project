@@ -2,6 +2,15 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { purchaseApi } from "./purchaseApi";
 
 const Course_API = "https://lms-project-steel-pi.vercel.app/api/v1/course";
+const AUTH_TOKEN_KEY = "lms_auth_token";
+
+const getStoredToken = () => {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+};
 
 export const courseApi = createApi({
   reducerPath: "courseApi",
@@ -16,6 +25,15 @@ export const courseApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: Course_API,
     credentials: "include",
+    prepareHeaders: (headers) => {
+      const token = getStoredToken();
+
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+
+      return headers;
+    },
   }),
   endpoints: (builder) => ({
     createCourse: builder.mutation({
@@ -128,6 +146,7 @@ export const courseApi = createApi({
       query: (courseId) => ({
         url: `/${courseId}`,
         method: "GET",
+        credentials: "omit",
       }),
       providesTags: (result, error, courseId) => [
         { type: "Refresh_Course", id: courseId },

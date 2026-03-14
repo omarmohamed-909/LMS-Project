@@ -1,8 +1,27 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const getPersistedUser = () => {
+    if (typeof window === "undefined") {
+        return null;
+    }
+
+    const raw = window.localStorage.getItem("lms_auth_user");
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+};
+
+const persistedUser = getPersistedUser();
+
 const initialState = {
-    user:null,
-    isAuthenticated:false
+    user:persistedUser,
+    isAuthenticated:Boolean(persistedUser)
 }
 
 const authSlice = createSlice({

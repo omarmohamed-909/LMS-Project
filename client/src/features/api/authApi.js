@@ -3,6 +3,57 @@ import { courseApi } from "./courseApi";
 import { userLoggedIn, userloggedout } from "../authSlice";
 
 const USER_API = "https://lms-project-steel-pi.vercel.app/api/v1/user/";
+const AUTH_TOKEN_KEY = "lms_auth_token";
+const AUTH_USER_KEY = "lms_auth_user";
+
+const getStoredToken = () => {
+    if (typeof window === "undefined") {
+        return "";
+    }
+
+    return window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+};
+
+const storeToken = (token) => {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    if (token) {
+        window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+    } else {
+        window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+};
+
+const getStoredUser = () => {
+    if (typeof window === "undefined") {
+        return null;
+    }
+
+    const raw = window.localStorage.getItem(AUTH_USER_KEY);
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+};
+
+const storeUser = (user) => {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    if (user) {
+        window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    } else {
+        window.localStorage.removeItem(AUTH_USER_KEY);
+    }
+};
 
 const getManageableCourseById = (state, courseId) => {
     const manageableCourses =
@@ -17,6 +68,15 @@ export const authApi = createApi({
     baseQuery: fetchBaseQuery({
         baseUrl: USER_API,
         credentials: "include",
+        prepareHeaders: (headers) => {
+            const token = getStoredToken();
+
+            if (token) {
+                headers.set("Authorization", `Bearer ${token}`);
+            }
+
+            return headers;
+        },
     }),
     endpoints: (builder) => ({
         registerUser: builder.mutation({
@@ -35,6 +95,8 @@ export const authApi = createApi({
             async onQueryStarted(_, { queryFulfilled, dispatch }) {
                 try {
                     const result = await queryFulfilled;
+                    storeToken(result?.data?.token);
+                    storeUser(result?.data?.user);
                     dispatch(userLoggedIn({ user: result.data.user }));
                 } catch (error) {
                     console.log(error);
@@ -48,6 +110,8 @@ export const authApi = createApi({
             }),
             async onQueryStarted(_, { dispatch }) {
                 try {
+                    storeToken("");
+                    storeUser(null);
                     dispatch(userloggedout());
                 } catch (error) {
                     console.log(error);
@@ -63,8 +127,24 @@ export const authApi = createApi({
             async onQueryStarted(_, { queryFulfilled, dispatch }) {
                 try {
                     const result = await queryFulfilled;
+                    if (result?.data?.token) {
+                        storeToken(result.data.token);
+                    }
+                    storeUser(result?.data?.user);
                     dispatch(userLoggedIn({ user: result.data.user }));
                 } catch (error) {
+                    const status = error?.error?.status;
+                    // Only clear persisted auth when backend confirms token is invalid.
+                    if (status === 401) {
+                        storeToken("");
+                        storeUser(null);
+                        dispatch(userloggedout());
+                    } else {
+                        const savedUser = getStoredUser();
+                        if (savedUser) {
+                            dispatch(userLoggedIn({ user: savedUser }));
+                        }
+                    }
                     console.log(error);
                 }
             },

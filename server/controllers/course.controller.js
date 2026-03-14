@@ -207,7 +207,9 @@ export const getCourseById = async (req,res) => {
     try {
         const {courseId} = req.params;
 
-        const course = await Course.findById(courseId);
+        const course = await Course.findById(courseId)
+            .populate({ path: "creator", select: "name photoUrl" })
+            .populate({ path: "lectures" });
 
         if(!course){
             return res.status(404).json({

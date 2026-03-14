@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PageSkeleton from "@/components/PageSkeleton";
-import { useGetCreatorCourseQuery } from "@/features/api/courseApi"; // ✅ استخدمنا Creator بدلاً من Published
+import { useGetCreatorCourseQuery, useGetPublishedCourseQuery } from "@/features/api/courseApi";
 import { BadgeDollarSign, BookOpen, ChartColumnIncreasing, CircleDollarSign } from "lucide-react";
 import React from "react";
 import {
@@ -14,20 +14,30 @@ import {
 } from "recharts";
 
 const Dashboard = () => {
-  //  استخدام✅ الـ Hook الصحيح لجلب كورسات المدرب (أو استبدله بـ useGetCoursePurchaseStatusQuery لو أنشأته)
-  const { data, isError, isLoading } = useGetCreatorCourseQuery();
+  const { data, isError, isLoading, error } = useGetCreatorCourseQuery();
+  const {
+    data: publishedData,
+    isLoading: isPublishedLoading,
+    isError: isPublishedError,
+    error: publishedError,
+  } = useGetPublishedCourseQuery(undefined, {
+    skip: !isError,
+  });
 
-  if (isLoading) {
+  const courses = data?.courses ?? publishedData?.courses ?? [];
+  const isUsingPublishedFallback = !data?.courses && Boolean(publishedData?.courses);
+
+  if (isLoading || (isError && isPublishedLoading)) {
     return <PageSkeleton variant="dashboard" />;
   }
-  if (isError) {
-    return <h1 className="text-red-500">Failed to get course data</h1>;
+  if (isError && isPublishedError) {
+    const message =
+      error?.data?.message || publishedError?.data?.message || "Failed to get course data";
+    return <h1 className="text-red-500">{message}</h1>;
   }
 
-  const { courses } = data || {};
-
   if (!courses || courses.length === 0) {
-      return <h1>No courses found.</h1>
+      return <h1>{isUsingPublishedFallback ? "No published courses found." : "No courses found."}</h1>
   }
 
   const courseData = courses.map((course) => ({
@@ -90,7 +100,9 @@ const Dashboard = () => {
               Your course business at a glance
             </h1>
             <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-              Track your course catalog, pricing, and publishing status from one place.
+              {isUsingPublishedFallback
+                ? "Showing published courses because instructor dashboard data is temporarily unavailable."
+                : "Track your course catalog, pricing, and publishing status from one place."}
             </p>
           </div>
         </div>

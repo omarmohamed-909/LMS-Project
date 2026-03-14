@@ -14,6 +14,7 @@ import {
   useGetCourseDetailWithStatusQuery,
   useVerifyCheckoutSessionMutation,
 } from "@/features/api/purchaseApi";
+import { useGetCourseByIdQuery, useGetPublishedCourseQuery } from "@/features/api/courseApi";
 
 import {
   BadgeInfo,
@@ -35,12 +36,34 @@ const CourseDetail = () => {
   const [searchParams] = useSearchParams();
   const [selectedLectureId, setSelectedLectureId] = React.useState(null);
   const sessionId = searchParams.get("session_id");
-  const { data, isLoading, isError, refetch } =
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+  } =
     useGetCourseDetailWithStatusQuery(courseId);
+  const {
+    data: fallbackCourseData,
+    isLoading: isFallbackLoading,
+    isError: isFallbackError,
+  } = useGetCourseByIdQuery(courseId, {
+    skip: !courseId || !isError,
+  });
+  const {
+    data: publishedCoursesData,
+    isLoading: isPublishedFallbackLoading,
+    isError: isPublishedFallbackError,
+  } = useGetPublishedCourseQuery(undefined, {
+    skip: !courseId || !isError || !isFallbackError,
+  });
   const [verifyCheckoutSession, { isLoading: isVerifyingPayment }] =
     useVerifyCheckoutSessionMutation();
 
-  const course = data?.course;
+  const publishedFallbackCourse = publishedCoursesData?.courses?.find(
+    (item) => item?._id === courseId
+  );
+  const course = data?.course || fallbackCourseData?.course || publishedFallbackCourse;
   const hasAccess = data?.hasAccess ?? false;
   const isFreeCourse = data?.isFreeCourse ?? false;
   const lectures = course?.lectures ?? [];
@@ -105,8 +128,12 @@ const CourseDetail = () => {
     };
   }, [sessionId, hasAccess, verifyCheckoutSession, courseId, refetch, navigate]);
 
-  if (isLoading) return <PageSkeleton variant="courseDetail" />;
-  if (isError) return <h1>Failed to load course details</h1>;
+  if (isLoading || (isError && (isFallbackLoading || isPublishedFallbackLoading))) {
+    return <PageSkeleton variant="courseDetail" />;
+  }
+  if (isError && isFallbackError && isPublishedFallbackError) {
+    return <h1>Failed to load course details</h1>;
+  }
   if (sessionId && !hasAccess && isVerifyingPayment) {
     return <h1>Confirming your payment...</h1>;
   }

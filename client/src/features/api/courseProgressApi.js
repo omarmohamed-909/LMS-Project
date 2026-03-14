@@ -1,12 +1,30 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const COURSE_PURCHASE_API = "https://lms-project-steel-pi.vercel.app/api/v1/progress";
+const AUTH_TOKEN_KEY = "lms_auth_token";
+
+const getStoredToken = () => {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+};
 export const courseProgressApi = createApi({
   reducerPath: "courseProgressApi",
   tagTypes: ["LectureComments", "CommentNotifications"],
   baseQuery: fetchBaseQuery({
     baseUrl: COURSE_PURCHASE_API,
     credentials: "include",
+    prepareHeaders: (headers) => {
+      const token = getStoredToken();
+
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+
+      return headers;
+    },
   }),
   endpoints: (builder) => ({
     getCourseProgress: builder.query({
