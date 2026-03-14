@@ -45,6 +45,7 @@ export const courseApi = createApi({
         return {
           url: queryString,
           method: "GET",
+          credentials: "omit",
         };
       },
       providesTags: (result) =>
@@ -62,6 +63,7 @@ export const courseApi = createApi({
       query: () => ({
         url: "/published-courses",
         method: "GET",
+        credentials: "omit",
       }),
       providesTags: (result) =>
         result?.courses
