@@ -17,11 +17,20 @@ const getPersistedUser = () => {
     }
 };
 
+const hasPersistedToken = () => {
+    if (typeof window === "undefined") {
+        return false;
+    }
+
+    return Boolean(window.localStorage.getItem("lms_auth_token"));
+};
+
 const persistedUser = getPersistedUser();
+const persistedTokenExists = hasPersistedToken();
 
 const initialState = {
-    user:persistedUser,
-    isAuthenticated:Boolean(persistedUser)
+    user:persistedTokenExists ? persistedUser : null,
+    isAuthenticated:Boolean(persistedUser && persistedTokenExists)
 }
 
 const authSlice = createSlice({

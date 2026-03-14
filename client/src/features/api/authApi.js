@@ -141,8 +141,13 @@ export const authApi = createApi({
                         dispatch(userloggedout());
                     } else {
                         const savedUser = getStoredUser();
-                        if (savedUser) {
+                        const savedToken = getStoredToken();
+                        if (savedUser && savedToken) {
                             dispatch(userLoggedIn({ user: savedUser }));
+                        } else {
+                            storeToken("");
+                            storeUser(null);
+                            dispatch(userloggedout());
                         }
                     }
                     console.log(error);

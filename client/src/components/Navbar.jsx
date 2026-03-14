@@ -377,6 +377,7 @@ const MobileNavbar = ({ user, logoutHandler }) => {
 const CommentNotifications = ({ user, compact = false }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const hasAuthToken = typeof window !== "undefined" && Boolean(window.localStorage.getItem("lms_auth_token"));
   const storageKey = `comment-notifications-seen:${user?._id}`;
   const [seenNotifications, setSeenNotifications] = useState(() => {
     try {
@@ -387,7 +388,7 @@ const CommentNotifications = ({ user, compact = false }) => {
   });
 
   const { data, isLoading, refetch } = useGetCommentNotificationsQuery(undefined, {
-    skip: !user?._id,
+    skip: !user?._id || !hasAuthToken,
     pollingInterval: 5000,
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
