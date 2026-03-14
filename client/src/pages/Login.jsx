@@ -134,7 +134,7 @@ const Login = () => {
                     name="name"
                     value={signupInput.name}
                     onChange={(e) => changeInputHandeler(e, "signup")}
-                    placeholder="Eg. Omar Mohamed"
+                    placeholder="EX: Omar Mohamed"
                     required="true"
                     className="h-12 rounded-2xl border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
                   />
@@ -148,7 +148,7 @@ const Login = () => {
                       name="email"
                       value={signupInput.email}
                       onChange={(e) => changeInputHandeler(e, "signup")}
-                      placeholder="Eg. omar@gmail.com"
+                      placeholder="EX: omar@gmail.com"
                       required="true"
                       className="h-12 rounded-2xl border-slate-200 bg-slate-50 pl-11 dark:border-slate-800 dark:bg-slate-900"
                     />
@@ -223,7 +223,7 @@ const Login = () => {
                       name="email"
                       value={loginInput.email}
                       onChange={(e) => changeInputHandeler(e, "login")}
-                      placeholder="Eg. omar@gmail.com"
+                      placeholder="EX omar@gmail.com"
                       required="true"
                       className="h-12 rounded-2xl border-slate-200 bg-slate-50 pl-11 dark:border-slate-800 dark:bg-slate-900"
                     />

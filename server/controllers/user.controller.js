@@ -191,7 +191,8 @@ export const getUserProfile = async (req,res) =>{
     }
         return res.status(200).json({
             success:true,
-            user
+            user,
+            token: req.authToken || ""
         })
     } catch (error) {
         console.log(error)

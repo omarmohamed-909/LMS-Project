@@ -128,15 +128,23 @@ export const searchCourse = async (req,res) => {
 
 export const getPublishedCourse = async (_,res) => {
     try {
-        const courses = await Course.find({isPublished:true}).populate({path:"creator", select:"name photoUrl"});
-        if(!courses){
-            return res.status(404).json({
-                message:"Course not found"
-            })
+        try {
+            const courses = await Course.find({ isPublished: true })
+                .populate({ path: "creator", select: "name photoUrl" })
+                .sort({ createdAt: -1 });
+
+            return res.status(200).json({
+                courses: courses || [],
+            });
+        } catch (populateError) {
+            console.log("getPublishedCourse populate fallback:", populateError?.message || populateError);
+
+            // Fallback: serve published courses even if creator population fails for some records.
+            const courses = await Course.find({ isPublished: true }).sort({ createdAt: -1 });
+            return res.status(200).json({
+                courses: courses || [],
+            });
         }
-        return res.status(200).json({
-            courses,
-        })
     } catch (error) {
         console.log(error);
         return res.status(500).json({
