@@ -99,17 +99,14 @@ export const register = async (req ,res) =>{
              const createdUser = await User.create({
                 name: name.trim(),
                 email: normalizedEmail,
-                password:hashedPassword
+            password:hashedPassword,
+            emailVerified: true,
              })
-
-             const verificationDetails = await sendVerificationEmail(createdUser);
 
        return res.status(201).json({
         success:true,
-                message:"Account created. Verify your email before logging in.",
-                verificationRequired:true,
+            message:"Account created successfully.",
                 email: createdUser.email,
-                ...buildVerificationResponse(verificationDetails)
        })
     } catch (error) {
         console.log(error)
@@ -135,14 +132,6 @@ export const login = async (req,res) => {
         return res.status(400).json({
             success:false,
             message:"Incorect email or password"
-        })
-       }
-       if(!user.emailVerified){
-        return res.status(403).json({
-            success:false,
-            requiresVerification:true,
-            email:user.email,
-            message:"Please verify your email before logging in."
         })
        }
        const isPasswordMatch = await bcrypt.compare(password, user.password)

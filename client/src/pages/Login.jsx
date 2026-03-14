@@ -81,14 +81,7 @@ const Login = () => {
   useEffect(() => {
     if (registerIsSuccess && registerData) {
       toast.success(registerData.message || "Signup successful.");
-      const email = encodeURIComponent(registerData.email || signupInput.email);
-      navigate(`/verify-email-notice?email=${email}`, {
-        replace: true,
-        state: {
-          verificationPath: registerData.verificationPath,
-          verificationUrl: registerData.verificationUrl,
-        },
-      });
+      navigate("/login?mode=login", { replace: true });
     }
     if (registerError) {
       toast.error(registerError.data?.message || "Signup Failed");
@@ -100,11 +93,6 @@ const Login = () => {
     if (loginError) {
       const errorMessage = loginError.data?.message || "Login Failed";
       toast.error(errorMessage);
-
-      if (loginError.data?.requiresVerification) {
-        const email = loginError.data?.email || loginInput.email;
-        navigate(`/verify-email-notice?email=${encodeURIComponent(email)}`);
-      }
     }
   }, [
     loginData,
