@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { purchaseApi } from "./purchaseApi";
 
-const Course_API = "http://localhost:8080/api/v1/course";
+const Course_API = "https://lms-project-steel-pi.vercel.app/api/v1/course";
 
 export const courseApi = createApi({
   reducerPath: "courseApi",

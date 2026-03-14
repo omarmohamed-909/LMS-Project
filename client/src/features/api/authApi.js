@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { courseApi } from "./courseApi";
 import { userLoggedIn, userloggedout } from "../authSlice";
 
-const USER_API = "http://localhost:8080/api/v1/user/";
+const USER_API = "https://lms-project-steel-pi.vercel.app/api/v1/user/";
 
 const getManageableCourseById = (state, courseId) => {
     const manageableCourses =
