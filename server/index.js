@@ -23,7 +23,7 @@ app.use("/api/v1/purchase/webhook", express.raw({ type: "application/json" }))
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: "*",
     credentials: true
 }))
 
