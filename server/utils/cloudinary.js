@@ -8,20 +8,26 @@ const cloudinaryConfig = {
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUD_NAME,
 };
 
-const hasCloudinaryConfig =
+const hasCloudinaryUrl = Boolean(process.env.CLOUDINARY_URL);
+const hasExplicitCloudinaryConfig =
     Boolean(cloudinaryConfig.api_key) &&
     Boolean(cloudinaryConfig.api_secret) &&
     Boolean(cloudinaryConfig.cloud_name);
 
+const hasCloudinaryConfig =
+    hasExplicitCloudinaryConfig || hasCloudinaryUrl;
+
 if (!hasCloudinaryConfig) {
-    console.error("Cloudinary config missing. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET on deployment.");
+    console.error("Cloudinary config missing. Set CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET on deployment.");
 }
 
-cloudinary.config({
-    api_key: cloudinaryConfig.api_key,
-    api_secret: cloudinaryConfig.api_secret,
-    cloud_name: cloudinaryConfig.cloud_name,
-});
+if (hasExplicitCloudinaryConfig) {
+    cloudinary.config({
+        api_key: cloudinaryConfig.api_key,
+        api_secret: cloudinaryConfig.api_secret,
+        cloud_name: cloudinaryConfig.cloud_name,
+    });
+}
 
 export const uploadMedia = async(file)=>{
     try {
