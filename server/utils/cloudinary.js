@@ -29,21 +29,40 @@ if (hasExplicitCloudinaryConfig) {
     });
 }
 
-export const uploadMedia = async(file)=>{
-    try {
-        if (!hasCloudinaryConfig) {
-            throw new Error("Cloudinary is not configured");
-        }
+export const uploadMedia = async (file) => {
+    if (!hasCloudinaryConfig) {
+        throw new Error("Cloudinary is not configured");
+    }
 
+    // file can be a Buffer (memoryStorage) or a path string (legacy)
+    if (Buffer.isBuffer(file)) {
+        return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                { resource_type: "auto" },
+                (error, result) => {
+                    if (error) {
+                        console.error("Cloudinary upload error:", error?.message || error);
+                        reject(new Error("Media upload failed"));
+                    } else {
+                        resolve(result);
+                    }
+                }
+            );
+            stream.end(file);
+        });
+    }
+
+    // Legacy path string
+    try {
         const uploadResponse = await cloudinary.uploader.upload(file, {
-            resource_type:"auto"
+            resource_type: "auto",
         });
         return uploadResponse;
     } catch (error) {
         console.error("Cloudinary upload error:", error?.message || error);
         throw new Error("Media upload failed");
     }
-}
+};
 
 export const deleteMediaFromCloudinary = async(publicId)=>{
     try {

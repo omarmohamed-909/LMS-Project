@@ -220,7 +220,7 @@ export const updateProfile = async(req,res)=>{
 
         if(profilePhoto){
             try {
-                const cloudResponse = await uploadMedia(profilePhoto.path);
+                const cloudResponse = await uploadMedia(profilePhoto.buffer || profilePhoto.path);
                 if (cloudResponse?.secure_url) {
                     // Only delete old image after the new upload succeeds.
                     if(user.photoUrl){
