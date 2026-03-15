@@ -156,7 +156,7 @@ const CourseTab = () => {
             Update your course title, pricing, category, and thumbnail from one place.
           </CardDescription>
         </div>
-        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:gap-3">
+        <div className="hidden sm:flex sm:w-auto sm:flex-wrap sm:gap-3">
           <Button
             disabled={courseByIdData?.course.lectures.length === 0}
             variant="outline"
@@ -321,24 +321,43 @@ const CourseTab = () => {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Review your content, pricing, and thumbnail before saving.
-          </p>
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:gap-3">
-            <Button onClick={() => navigate("/admin/course")} variant="outline" className="h-11 rounded-2xl px-4 text-xs font-semibold sm:px-5 sm:text-sm">
+
+          {/* Desktop: Save + Cancel on the right */}
+          <div className="hidden sm:flex sm:w-auto sm:gap-3">
+            <Button onClick={() => navigate("/admin/course")} variant="outline" className="h-11 rounded-2xl px-5 text-sm font-semibold">
               Cancel
             </Button>
-            <Button disabled={isLoading} onClick={updateCourseHandler} className="h-11 rounded-2xl px-4 text-xs font-semibold sm:px-6 sm:text-sm">
+            <Button disabled={isLoading} onClick={updateCourseHandler} className="h-11 rounded-2xl px-6 text-sm font-semibold">
               {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait
-                </>
-              ) : (
-                "Save"
-              )}
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Please wait</>
+              ) : "Save"}
             </Button>
           </div>
+
+          {/* Mobile only */}
+          <div className="flex flex-col gap-2 sm:hidden">
+            {/* Publish / Remove row */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                disabled={courseByIdData?.course.lectures.length === 0}
+                variant="outline"
+                className="h-10 rounded-2xl text-xs font-semibold"
+                onClick={() => publishStatusHandler(courseByIdData?.course.isPublished ? "false" : "true")}
+              >
+                {courseByIdData?.course.isPublished ? "Unpublish" : "Publish"}
+              </Button>
+              <Button variant="destructive" className="h-10 rounded-2xl text-xs font-semibold">
+                Remove Course
+              </Button>
+            </div>
+            {/* Save full width */}
+            <Button disabled={isLoading} onClick={updateCourseHandler} className="h-11 w-full rounded-2xl text-sm font-semibold">
+              {isLoading ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Please wait</>
+              ) : "Save Changes"}
+            </Button>
+          </div>
+
         </div>
       </CardContent>
     </Card>
