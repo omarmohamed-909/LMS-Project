@@ -67,6 +67,44 @@ const QuizDashboard = () => {
 
   const selectedCourse = courses.find((c) => c._id === selectedCourseId);
 
+  const getPerformanceGrade = (percent) => {
+    if (percent >= 80) {
+      return {
+        label: "Excellent",
+        color: "text-emerald-700 dark:text-emerald-400",
+        bar: "bg-emerald-500",
+        pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+      };
+    }
+
+    if (percent >= 50) {
+      return {
+        label: "Good",
+        color: "text-amber-700 dark:text-amber-400",
+        bar: "bg-amber-500",
+        pill: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+      };
+    }
+
+    return {
+      label: "Needs Work",
+      color: "text-red-700 dark:text-red-400",
+      bar: "bg-red-500",
+      pill: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    };
+  };
+
+  const formatSubmittedAt = (dateValue) =>
+    dateValue
+      ? new Date(dateValue).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "—";
+
   const statCards = [
     {
       title: "Total Attempts",
@@ -130,22 +168,22 @@ const QuizDashboard = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-slate-900 to-slate-700 p-6 text-white shadow-lg dark:from-slate-800 dark:to-slate-900">
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-slate-900 to-slate-700 p-4 text-white shadow-lg dark:from-slate-800 dark:to-slate-900 sm:p-6">
         <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="mb-1 text-xs font-medium uppercase tracking-widest text-slate-400">
               Admin Panel
             </p>
-            <h1 className="text-2xl font-bold sm:text-3xl">Quiz Dashboard</h1>
+            <h1 className="text-xl font-bold sm:text-3xl">Quiz Dashboard</h1>
             <p className="mt-1 text-sm text-slate-400">
               Monitor student performance across all quiz-enabled lectures.
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 backdrop-blur-sm">
+          <div className="flex w-full shrink-0 items-center gap-2 rounded-xl bg-white/10 px-3 py-2 backdrop-blur-sm sm:w-auto sm:px-4 sm:py-2.5">
             <ClipboardList className="h-4 w-4 text-slate-300" />
-            <span className="text-sm font-medium text-slate-200">
+            <span className="truncate text-sm font-medium text-slate-200">
               {selectedCourse ? selectedCourse.courseTitle : "No course selected"}
             </span>
           </div>
@@ -234,7 +272,7 @@ const QuizDashboard = () => {
       {selectedCourseId && !quizLoading && (
         <>
           {/* Stat cards */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
             {statCards.map((card) => (
               <Card
                 key={card.title}
@@ -242,12 +280,12 @@ const QuizDashboard = () => {
               >
                 <CardContent className="p-0">
                   <div className={`h-1 w-full bg-linear-to-r ${card.gradient}`} />
-                  <div className="flex items-center gap-4 p-5">
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${card.lightBg}`}>
+                  <div className="flex items-center gap-3 p-3.5 sm:gap-4 sm:p-5">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.lightBg} sm:h-12 sm:w-12`}>
                       <card.icon className={`h-5 w-5 ${card.textColor}`} />
                     </div>
                     <div>
-                      <p className={`text-3xl font-extrabold ${card.textColor}`}>{card.value}</p>
+                      <p className={`text-2xl font-extrabold sm:text-3xl ${card.textColor}`}>{card.value}</p>
                       <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                         {card.title}
                       </p>
@@ -286,7 +324,113 @@ const QuizDashboard = () => {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                  <div className="space-y-3 p-3 md:hidden">
+                    {filteredResults.map((result) => {
+                      const percent = result.percentage ?? 0;
+                      const grade = getPerformanceGrade(percent);
+                      const attemptsCount =
+                        result.attemptsCount || result.history?.length || 1;
+                      const history = historyByResultId[result._id] || [];
+                      const rowKey = `${result.userId?._id || "unknown"}-${result.lectureId?._id || result._id}`;
+                      const isExpanded = expandedHistoryKey === rowKey;
+
+                      return (
+                        <div
+                          key={rowKey}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              <Avatar className="h-9 w-9 ring-2 ring-white shadow-sm dark:ring-slate-800">
+                                <AvatarImage src={result.userId?.photoUrl} />
+                                <AvatarFallback className="bg-linear-to-br from-slate-400 to-slate-600 text-xs font-semibold text-white">
+                                  {result.userId?.name?.slice(0, 2).toUpperCase() ?? "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                  {result.userId?.name ?? "Unknown"}
+                                </p>
+                                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                  {result.userId?.email ?? ""}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${grade.pill}`}>
+                              {percent}%
+                            </span>
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 dark:bg-slate-800">
+                              <ListChecks className="h-3 w-3" />
+                              {result.lectureId?.lectureTitle ?? "—"}
+                            </span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-100">
+                              {result.score}/{result.totalQuestions}
+                            </span>
+                          </div>
+
+                          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                            <div
+                              className={`h-full rounded-full transition-all ${grade.bar}`}
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleHistory(rowKey, result._id)}
+                              className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                            >
+                              <History className="h-3 w-3" />
+                              {attemptsCount} Attempts
+                              <ChevronDown
+                                className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                              />
+                            </button>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                              {formatSubmittedAt(result.updatedAt)}
+                            </span>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-2.5 dark:border-slate-700 dark:bg-slate-950/70">
+                              {isHistoryLoading && !history.length ? (
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                  Loading history...
+                                </span>
+                              ) : history.length > 0 ? (
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                  {history.map((attempt, index) => (
+                                    <div
+                                      key={`${rowKey}-attempt-${index}`}
+                                      className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 dark:border-slate-700 dark:bg-slate-900"
+                                    >
+                                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        Attempt #{history.length - index}
+                                      </p>
+                                      <p className="mt-0.5 text-xs font-bold text-slate-800 dark:text-slate-100">
+                                        {attempt.score}/{attempt.totalQuestions}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                  No history found.
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="hidden overflow-x-auto md:block">
                   <Table>
                     <TableHeader>
                       <TableRow className="border-slate-100 bg-transparent hover:bg-transparent dark:border-slate-800">
@@ -313,23 +457,8 @@ const QuizDashboard = () => {
                     <TableBody>
                       {filteredResults.map((result) => {
                         const percent = result.percentage ?? 0;
-
-                        const grade =
-                          percent >= 80
-                            ? { label: "Excellent", color: "text-emerald-700 dark:text-emerald-400", bar: "bg-emerald-500", pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" }
-                            : percent >= 50
-                            ? { label: "Good", color: "text-amber-700 dark:text-amber-400", bar: "bg-amber-500", pill: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" }
-                            : { label: "Needs Work", color: "text-red-700 dark:text-red-400", bar: "bg-red-500", pill: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" };
-
-                        const submittedAt = result.updatedAt
-                          ? new Date(result.updatedAt).toLocaleDateString("en-GB", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "—";
+                        const grade = getPerformanceGrade(percent);
+                        const submittedAt = formatSubmittedAt(result.updatedAt);
 
                         const attemptsCount =
                           result.attemptsCount || result.history?.length || 1;
@@ -429,18 +558,7 @@ const QuizDashboard = () => {
                                       </span>
                                     ) : history.length > 0 ? (
                                       history.map((attempt, index) => {
-                                        const attemptDate = attempt.submittedAt
-                                          ? new Date(attempt.submittedAt).toLocaleDateString(
-                                              "en-GB",
-                                              {
-                                                day: "2-digit",
-                                                month: "short",
-                                                year: "numeric",
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                              }
-                                            )
-                                          : "—";
+                                        const attemptDate = formatSubmittedAt(attempt.submittedAt);
 
                                         return (
                                           <span
@@ -475,6 +593,7 @@ const QuizDashboard = () => {
                     </TableBody>
                   </Table>
                 </div>
+                </>
               )}
             </CardContent>
           </Card>

@@ -148,30 +148,30 @@ const CourseTab = () => {
 
 
   return (
-    <Card className="overflow-hidden rounded-[30px] border border-slate-200/80 bg-white shadow-[0_24px_70px_-40px_rgba(15,23,42,0.35)] dark:border-slate-800 dark:bg-slate-950">
-      <CardHeader className="flex flex-col gap-4 border-b border-slate-200/70 bg-slate-50/80 px-6 py-5 dark:border-slate-800 dark:bg-slate-900/40 lg:flex-row lg:items-start lg:justify-between">
+    <Card className="overflow-hidden rounded-[24px] border border-slate-200/80 bg-white shadow-[0_24px_70px_-40px_rgba(15,23,42,0.35)] dark:border-slate-800 dark:bg-slate-950 sm:rounded-[30px]">
+      <CardHeader className="flex flex-col gap-4 border-b border-slate-200/70 bg-slate-50/80 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/40 sm:px-6 sm:py-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
-          <CardTitle className="text-2xl">Basic Course Information</CardTitle>
+          <CardTitle className="text-[1.85rem] sm:text-2xl">Basic Course Information</CardTitle>
           <CardDescription className="max-w-2xl text-sm leading-6">
             Update your course title, pricing, category, and thumbnail from one place.
           </CardDescription>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:gap-3">
           <Button
             disabled={courseByIdData?.course.lectures.length === 0}
             variant="outline"
-            className="h-11 rounded-2xl px-5 font-semibold"
+            className="h-10 rounded-2xl px-3 text-xs font-semibold sm:h-11 sm:px-5 sm:text-sm"
             onClick={() => publishStatusHandler(courseByIdData?.course.isPublished ? "false" : "true")}
           >
             {courseByIdData?.course.isPublished ? "Unpublish" : "Publish"}
           </Button>
-          <Button className="h-11 rounded-2xl px-5 font-semibold">Remove Course</Button>
+          <Button className="h-10 rounded-2xl px-3 text-xs font-semibold sm:h-11 sm:px-5 sm:text-sm">Remove Course</Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6 p-6 md:p-8">
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <CardContent className="space-y-5 p-4 sm:space-y-6 sm:p-6 md:p-8">
+        <div className="grid gap-4 sm:gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-3xl sm:p-5">
               <Label className="mb-3 block text-sm font-semibold text-slate-900 dark:text-slate-100">Title</Label>
               <Input
                 type="text"
@@ -183,7 +183,7 @@ const CourseTab = () => {
               />
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-3xl sm:p-5">
               <Label className="mb-3 block text-sm font-semibold text-slate-900 dark:text-slate-100">Subtitle</Label>
               <Input
                 type="text"
@@ -195,14 +195,14 @@ const CourseTab = () => {
               />
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-3xl sm:p-5">
               <Label className="mb-3 block text-sm font-semibold text-slate-900 dark:text-slate-100">Description</Label>
               <RichTextEditor input={input} setInput={setInput} />
             </div>
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-3xl sm:p-5">
               <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                 <Tag className="h-4 w-4 text-blue-600 dark:text-cyan-400" />
                 Course settings
@@ -274,7 +274,7 @@ const CourseTab = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-3xl sm:p-5">
               <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-900/60">
                 <div>
                   <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -289,7 +289,7 @@ const CourseTab = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 sm:rounded-3xl sm:p-5">
               <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                 <ImageUp className="h-4 w-4 text-blue-600 dark:text-cyan-400" />
                 Course thumbnail
@@ -307,7 +307,7 @@ const CourseTab = () => {
                 {previewThumbnail || existingThumbnail ? (
                   <img
                     src={previewThumbnail || existingThumbnail}
-                    className="h-64 w-full rounded-2xl object-cover"
+                    className="h-48 w-full rounded-2xl object-cover sm:h-64"
                     alt="Course Thumbnail"
                   />
                 ) : (
@@ -320,15 +320,15 @@ const CourseTab = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Review your content, pricing, and thumbnail before saving.
           </p>
-          <div className="flex gap-3">
-            <Button onClick={() => navigate("/admin/course")} variant="outline" className="h-11 rounded-2xl px-5 font-semibold">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:gap-3">
+            <Button onClick={() => navigate("/admin/course")} variant="outline" className="h-11 rounded-2xl px-4 text-xs font-semibold sm:px-5 sm:text-sm">
               Cancel
             </Button>
-            <Button disabled={isLoading} onClick={updateCourseHandler} className="h-11 rounded-2xl px-6 font-semibold">
+            <Button disabled={isLoading} onClick={updateCourseHandler} className="h-11 rounded-2xl px-4 text-xs font-semibold sm:px-6 sm:text-sm">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

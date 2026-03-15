@@ -3,11 +3,14 @@ import {
   Bell,
   BookOpen,
   CircleHelp,
+  ClipboardList,
   House,
   LayoutDashboard,
   LogOut,
   Menu,
   School,
+  SquareLibrary,
+  Users,
   UserCircle2,
   X,
 } from "lucide-react";
@@ -325,16 +328,48 @@ const MobileNavbar = ({ user, logoutHandler }) => {
               </Link>
             </SheetClose>
             {user?.role === "instructor" && (
-              <SheetClose asChild>
-                <button
-                  type="button"
-                  onClick={() => navigate("/admin/dashboard")}
-                  className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-medium text-slate-800 transition-colors hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-900"
-                >
-                  <LayoutDashboard className="h-4 w-4 text-blue-600 dark:text-cyan-400" />
-                  Dashboard
-                </button>
-              </SheetClose>
+              <>
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/admin/dashboard")}
+                    className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-medium text-slate-800 transition-colors hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-900"
+                  >
+                    <LayoutDashboard className="h-4 w-4 text-blue-600 dark:text-cyan-400" />
+                    Dashboard
+                  </button>
+                </SheetClose>
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/admin/course")}
+                    className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-medium text-slate-800 transition-colors hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-900"
+                  >
+                    <SquareLibrary className="h-4 w-4 text-blue-600 dark:text-cyan-400" />
+                    Admin Courses
+                  </button>
+                </SheetClose>
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/admin/users")}
+                    className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-medium text-slate-800 transition-colors hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-900"
+                  >
+                    <Users className="h-4 w-4 text-blue-600 dark:text-cyan-400" />
+                    Admin Users
+                  </button>
+                </SheetClose>
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/admin/quiz-dashboard")}
+                    className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-medium text-slate-800 transition-colors hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-900"
+                  >
+                    <ClipboardList className="h-4 w-4 text-blue-600 dark:text-cyan-400" />
+                    Quiz Results
+                  </button>
+                </SheetClose>
+              </>
             )}
           </nav>
         </div>
