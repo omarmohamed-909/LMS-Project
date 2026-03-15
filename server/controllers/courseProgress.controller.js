@@ -40,6 +40,34 @@ const ensureCourseAccess = async (courseId, userId) => {
 const ensureLectureBelongsToCourse = (course, lectureId) =>
   course?.lectures?.some((courseLectureId) => courseLectureId.toString() === lectureId);
 
+const getNestedCommentIds = async ({ courseId, lectureId, rootCommentId }) => {
+  const nestedIds = [rootCommentId.toString()];
+  let queue = [rootCommentId.toString()];
+
+  while (queue.length > 0) {
+    const currentBatch = queue;
+    queue = [];
+
+    const childComments = await LectureComment.find({
+      courseId,
+      lectureId,
+      parentCommentId: { $in: currentBatch },
+    })
+      .select("_id")
+      .lean();
+
+    const childIds = childComments.map((comment) => comment._id.toString());
+    if (!childIds.length) {
+      continue;
+    }
+
+    nestedIds.push(...childIds);
+    queue = childIds;
+  }
+
+  return nestedIds;
+};
+
 export const getCommentNotifications = async (req, res) => {
   try {
     const userId = req.id;
@@ -393,12 +421,6 @@ export const addLectureComment = async (req, res) => {
           message: "Parent comment not found.",
         });
       }
-
-      if (parentComment.parentCommentId) {
-        return res.status(400).json({
-          message: "Replies can only be added to top-level comments.",
-        });
-      }
     }
 
     const comment = await LectureComment.create({
@@ -465,8 +487,14 @@ export const deleteLectureComment = async (req, res) => {
       });
     }
 
+    const nestedCommentIds = await getNestedCommentIds({
+      courseId,
+      lectureId,
+      rootCommentId: commentId,
+    });
+
     await LectureComment.deleteMany({
-      $or: [{ _id: commentId }, { parentCommentId: commentId }],
+      _id: { $in: nestedCommentIds },
     });
 
     return res.status(200).json({

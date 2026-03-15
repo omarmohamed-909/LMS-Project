@@ -109,19 +109,19 @@ const CourseProgress = () => {
     curerntLecture || (courseDetails.lectures && courseDetails.lectures[0]);
   const activeLecture = curerntLecture || initialLecture;
   const comments = commentsData?.comments ?? [];
-  const topLevelComments = comments.filter((comment) => !comment.parentCommentId);
-  const repliesByParentId = comments.reduce((map, comment) => {
-    if (!comment.parentCommentId) {
-      return map;
-    }
+  const commentsByParentId = comments.reduce((map, comment) => {
+    const parentId = comment.parentCommentId
+      ? comment.parentCommentId.toString()
+      : "root";
 
-    const parentId = comment.parentCommentId.toString();
     if (!map[parentId]) {
       map[parentId] = [];
     }
+
     map[parentId].push(comment);
     return map;
   }, {});
+  const topLevelComments = commentsByParentId.root || [];
   const isLectureVideoCompleted = (lectureId) =>
     progress.some((prog) => prog.lectureId === lectureId && prog.viewed);
 
@@ -319,6 +319,155 @@ const CourseProgress = () => {
     }
   };
 
+  const renderCommentNode = (comment, depth = 0) => {
+    const canDelete =
+      user?._id === comment.userId?._id || user?.role === "instructor";
+    const canPin = user?.role === "instructor" && !comment.parentCommentId;
+    const commenterName = comment.userId?.name || "User";
+    const commenterInitials = commenterName
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2);
+    const children = commentsByParentId[comment._id] || [];
+    const isReplying = activeReplyFor === comment._id;
+
+    return (
+      <div
+        key={comment._id}
+        className={`rounded-2xl border bg-white p-4 shadow-[0_10px_25px_-20px_rgba(15,23,42,0.6)] transition hover:border-slate-300 dark:bg-slate-950 dark:hover:border-slate-700 ${
+          comment.isPinned
+            ? "border-amber-300/90 ring-1 ring-amber-200 dark:border-amber-400/40 dark:ring-amber-500/20"
+            : "border-slate-200 dark:border-slate-800"
+        }`}
+        style={{ marginLeft: depth ? `${Math.min(depth, 6) * 14}px` : 0 }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <Avatar className="h-10 w-10 shrink-0 ring-2 ring-slate-200 dark:ring-slate-700">
+              <AvatarImage
+                src={comment.userId?.photoUrl || "https://github.com/shadcn.png"}
+                alt={commenterName}
+              />
+              <AvatarFallback className="text-xs font-semibold uppercase">
+                {commenterInitials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {commenterName}
+                </p>
+                {comment.isPinned && !comment.parentCommentId && (
+                  <Badge className="h-5 rounded-full bg-amber-100 px-2 text-[10px] font-bold uppercase tracking-wide text-amber-700 hover:bg-amber-100 dark:bg-amber-500/15 dark:text-amber-300">
+                    Pinned
+                  </Badge>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {new Date(comment.createdAt).toLocaleString()}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            {canPin && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={isPinningComment}
+                onClick={() => handleTogglePinnedComment(comment._id)}
+                className="h-9 w-9 rounded-xl text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-300"
+                title={comment.isPinned ? "Unpin comment" : "Pin comment"}
+              >
+                {comment.isPinned ? (
+                  <PinOff className="h-4 w-4" />
+                ) : (
+                  <Pin className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={isDeletingComment}
+                onClick={() => handleDeleteComment(comment._id)}
+                className="h-9 w-9 rounded-xl text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <p className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50 px-3 py-2.5 text-sm leading-6 text-slate-700 dark:bg-slate-900 dark:text-slate-300">
+          {comment.replyToUserId?.name ? `@${comment.replyToUserId.name} ` : ""}
+          {comment.text}
+        </p>
+
+        <div className="mt-3 flex justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() =>
+              setActiveReplyFor((currentValue) =>
+                currentValue === comment._id ? null : comment._id
+              )
+            }
+            className="h-8 rounded-xl px-2.5 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-cyan-300"
+          >
+            <CornerDownRight className="mr-1.5 h-3.5 w-3.5" />
+            Reply
+          </Button>
+        </div>
+
+        {isReplying && (
+          <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+            <textarea
+              value={replyTextByComment[comment._id] || ""}
+              onChange={(event) =>
+                setReplyTextByComment((currentValue) => ({
+                  ...currentValue,
+                  [comment._id]: event.target.value,
+                }))
+              }
+              placeholder={`Reply to ${commenterName}`}
+              className="min-h-20 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-500/70 dark:focus:ring-cyan-500/10"
+            />
+            <div className="mt-2 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-8 rounded-xl px-3 text-xs"
+                onClick={() => setActiveReplyFor(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                className="h-8 rounded-xl px-3 text-xs"
+                disabled={
+                  isAddingComment || !(replyTextByComment[comment._id] || "").trim()
+                }
+                onClick={() => handleAddReply(comment._id)}
+              >
+                {isAddingComment ? "Posting..." : "Post Reply"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {children.length > 0 && (
+          <div className="mt-3 space-y-2.5 border-l-2 border-slate-200 pl-3 dark:border-slate-700">
+            {children.map((childComment) => renderCommentNode(childComment, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const updateQuizAnswer = (questionIndex, optionIndex) => {
     setQuizAnswers((currentValue) => ({
       ...currentValue,
@@ -409,204 +558,7 @@ const CourseProgress = () => {
             No comments yet. Start the discussion for this lecture.
           </p>
         ) : (
-          topLevelComments.map((comment) => {
-            const canDelete =
-              user?._id === comment.userId?._id || user?.role === "instructor";
-            const canPin = user?.role === "instructor";
-            const commenterName = comment.userId?.name || "User";
-            const commenterInitials = commenterName
-              .split(" ")
-              .map((part) => part[0])
-              .join("")
-              .slice(0, 2);
-            const replies = repliesByParentId[comment._id] || [];
-
-            return (
-              <div
-                key={comment._id}
-                className={`rounded-2xl border bg-white p-4 shadow-[0_10px_25px_-20px_rgba(15,23,42,0.6)] transition hover:border-slate-300 dark:bg-slate-950 dark:hover:border-slate-700 ${
-                  comment.isPinned
-                    ? "border-amber-300/90 ring-1 ring-amber-200 dark:border-amber-400/40 dark:ring-amber-500/20"
-                    : "border-slate-200 dark:border-slate-800"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <Avatar className="h-10 w-10 shrink-0 ring-2 ring-slate-200 dark:ring-slate-700">
-                      <AvatarImage
-                        src={comment.userId?.photoUrl || "https://github.com/shadcn.png"}
-                        alt={commenterName}
-                      />
-                      <AvatarFallback className="text-xs font-semibold uppercase">
-                        {commenterInitials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                          {commenterName}
-                        </p>
-                        {comment.isPinned && (
-                          <Badge className="h-5 rounded-full bg-amber-100 px-2 text-[10px] font-bold uppercase tracking-wide text-amber-700 hover:bg-amber-100 dark:bg-amber-500/15 dark:text-amber-300">
-                            Pinned
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        {new Date(comment.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {canPin && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={isPinningComment}
-                        onClick={() => handleTogglePinnedComment(comment._id)}
-                        className="h-9 w-9 rounded-xl text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-300"
-                        title={comment.isPinned ? "Unpin comment" : "Pin comment"}
-                      >
-                        {comment.isPinned ? (
-                          <PinOff className="h-4 w-4" />
-                        ) : (
-                          <Pin className="h-4 w-4" />
-                        )}
-                      </Button>
-                    )}
-                    {canDelete && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={isDeletingComment}
-                        onClick={() => handleDeleteComment(comment._id)}
-                        className="h-9 w-9 rounded-xl text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <p className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50 px-3 py-2.5 text-sm leading-6 text-slate-700 dark:bg-slate-900 dark:text-slate-300">
-                  {comment.text}
-                </p>
-
-                <div className="mt-3 flex justify-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() =>
-                      setActiveReplyFor((currentValue) =>
-                        currentValue === comment._id ? null : comment._id
-                      )
-                    }
-                    className="h-8 rounded-xl px-2.5 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-cyan-300"
-                  >
-                    <CornerDownRight className="mr-1.5 h-3.5 w-3.5" />
-                    Reply
-                  </Button>
-                </div>
-
-                {activeReplyFor === comment._id && (
-                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
-                    <textarea
-                      value={replyTextByComment[comment._id] || ""}
-                      onChange={(event) =>
-                        setReplyTextByComment((currentValue) => ({
-                          ...currentValue,
-                          [comment._id]: event.target.value,
-                        }))
-                      }
-                      placeholder={`Reply to ${commenterName}`}
-                      className="min-h-20 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-500/70 dark:focus:ring-cyan-500/10"
-                    />
-                    <div className="mt-2 flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-8 rounded-xl px-3 text-xs"
-                        onClick={() => setActiveReplyFor(null)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="button"
-                        className="h-8 rounded-xl px-3 text-xs"
-                        disabled={
-                          isAddingComment || !(replyTextByComment[comment._id] || "").trim()
-                        }
-                        onClick={() => handleAddReply(comment._id)}
-                      >
-                        {isAddingComment ? "Posting..." : "Post Reply"}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {replies.length > 0 && (
-                  <div className="mt-3 space-y-2.5 border-l-2 border-slate-200 pl-3 dark:border-slate-700">
-                    {replies.map((reply) => {
-                      const canDeleteReply =
-                        user?._id === reply.userId?._id || user?.role === "instructor";
-                      const replyUserName = reply.userId?.name || "User";
-                      const replyUserInitials = replyUserName
-                        .split(" ")
-                        .map((part) => part[0])
-                        .join("")
-                        .slice(0, 2);
-
-                      return (
-                        <div
-                          key={reply._id}
-                          className="rounded-xl border border-slate-200 bg-slate-50/90 p-3 shadow-[0_10px_20px_-20px_rgba(15,23,42,0.7)] dark:border-slate-800 dark:bg-slate-900"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex min-w-0 items-start gap-2.5">
-                              <Avatar className="h-8 w-8 shrink-0 ring-1 ring-slate-200 dark:ring-slate-700">
-                                <AvatarImage
-                                  src={reply.userId?.photoUrl || "https://github.com/shadcn.png"}
-                                  alt={replyUserName}
-                                />
-                                <AvatarFallback className="text-[10px] font-semibold uppercase">
-                                  {replyUserInitials}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="min-w-0">
-                                <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
-                                  {replyUserName}
-                                </p>
-                                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                                  {new Date(reply.createdAt).toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-                            {canDeleteReply && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                disabled={isDeletingComment}
-                                onClick={() => handleDeleteComment(reply._id)}
-                                className="h-8 w-8 rounded-lg text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                          <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-slate-700 dark:text-slate-300">
-                            {reply.replyToUserId?.name ? `@${reply.replyToUserId.name} ` : ""}
-                            {reply.text}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })
+          topLevelComments.map((comment) => renderCommentNode(comment))
         )}
       </div>
     </div>
