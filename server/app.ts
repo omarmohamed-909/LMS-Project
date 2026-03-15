@@ -23,10 +23,16 @@ const allowedOrigins = [
     "http://localhost:3000",
 ];
 
+const isAllowedVercelPreview = (origin: string) =>
+    /^https:\/\/(?:lms-project|e-learning-omar)-[a-z0-9-]+\.vercel\.app$/i.test(origin);
+
+const isAllowedLocalDevOrigin = (origin: string) =>
+    /^http:\/\/(localhost|127\.0\.0\.1):\d+$/i.test(origin);
+
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) return callback(null, true);
+        if (allowedOrigins.includes(origin) || isAllowedVercelPreview(origin) || isAllowedLocalDevOrigin(origin)) return callback(null, true);
         return callback(new Error("Not allowed by CORS"));
     },
     credentials: true

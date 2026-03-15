@@ -2,7 +2,13 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { courseApi } from "./courseApi";
 import { userLoggedIn, userloggedout } from "../authSlice";
 
-const USER_API = "https://lms-project-steel-pi.vercel.app/api/v1/user/";
+const DEFAULT_API_BASE_URL =
+    typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+        ? "http://localhost:8080"
+        : "https://lms-project-steel-pi.vercel.app";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
+const USER_API = `${API_BASE_URL}/api/v1/user/`;
 const AUTH_TOKEN_KEY = "lms_auth_token";
 const AUTH_USER_KEY = "lms_auth_user";
 

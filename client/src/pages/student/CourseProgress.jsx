@@ -23,6 +23,14 @@ import ReactPlayer from "react-player";
 import { useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
+const YOUTUBE_PLAYER_CONFIG = {
+  youtube: {
+    playerVars: {
+      origin: typeof window !== "undefined" ? window.location.origin : undefined,
+    },
+  },
+};
+
 const CourseProgress = () => {
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -643,6 +651,7 @@ const CourseProgress = () => {
                 <ReactPlayer
                   src={secureMediaUrl(activeLecture?.videoUrl)}
                   controls
+                  config={YOUTUBE_PLAYER_CONFIG}
                   width="100%"
                   height="100%"
                   className="aspect-video"

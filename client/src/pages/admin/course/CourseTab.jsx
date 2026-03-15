@@ -55,11 +55,11 @@ const CourseTab = () => {
     if (courseByIdData?.course) {
       const course = courseByIdData.course;
       setInput({
-        courseTitle: course.courseTitle ,
-        subTitle: course.subTitle ,
-        description: course.description,
-        category: course.category ,
-        courseLevel:  course.courseLevel,
+        courseTitle: course.courseTitle || "",
+        subTitle: course.subTitle || "",
+        description: course.description || "",
+        category: course.category || "",
+        courseLevel: course.courseLevel || "",
         coursePrice: course.coursePrice ?? 0,
         courseThumbnail: "",
       });
@@ -134,15 +134,19 @@ const CourseTab = () => {
   };
 
   const successMessage = data?.message;
+  const errorMessage =
+    error?.data?.message ||
+    error?.error ||
+    "Failed to update course. Please try again.";
 
   useEffect(() => {
     if (isSuccess) {
       toast.success(successMessage || "Course updated.");
     }
     if (error) {
-      toast.error(error.data.message || "Failed to Create course.");
+      toast.error(errorMessage);
     }
-  }, [isSuccess, error, successMessage]);
+  }, [isSuccess, error, successMessage, errorMessage]);
 
   if(courseByIdLoading) return <PageSkeleton variant="form" />;
 

@@ -22,6 +22,13 @@ import { toast } from "sonner";
 const MEDIA_API = "https://lms-project-steel-pi.vercel.app/api/v1/media";
 const AUTH_TOKEN_KEY = "lms_auth_token";
 const YOUTUBE_URL_PATTERN = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i;
+const YOUTUBE_PLAYER_CONFIG = {
+  youtube: {
+    playerVars: {
+      origin: typeof window !== "undefined" ? window.location.origin : undefined,
+    },
+  },
+};
 
 const getAuthHeaders = () => {
   if (typeof window === "undefined") {
@@ -336,14 +343,19 @@ const LectureTab = () => {
     await removeLecture(lectureId);
   }
 
+  const lectureErrorMessage =
+    error?.data?.message ||
+    error?.error ||
+    "Failed to update lecture.";
+
   useEffect(() => {
     if (isSuccess) {
       toast.success(data.message);
     }
     if (error) {
-      toast.error(error.data.message);
+      toast.error(lectureErrorMessage);
     }
-  }, [isSuccess, error, data?.message]);
+  }, [isSuccess, error, data?.message, lectureErrorMessage]);
 
   useEffect(() => {
     if (quizSuccess) {
@@ -615,6 +627,7 @@ const LectureTab = () => {
                   <ReactPlayer
                     src={secureMediaUrl(uploadVideInfo.videoUrl)}
                     controls
+                    config={YOUTUBE_PLAYER_CONFIG}
                     width="100%"
                     height="100%"
                     className="aspect-video"

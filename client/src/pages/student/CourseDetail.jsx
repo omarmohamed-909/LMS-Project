@@ -30,6 +30,14 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ReactPlayer from "react-player";
 import { toast } from "sonner";
 
+const YOUTUBE_PLAYER_CONFIG = {
+  youtube: {
+    playerVars: {
+      origin: typeof window !== "undefined" ? window.location.origin : undefined,
+    },
+  },
+};
+
 const CourseDetail = () => {
   const params = useParams();
   const courseId = params.courseId;
@@ -286,6 +294,7 @@ const CourseDetail = () => {
                     height={"100%"}
                     src={secureMediaUrl(selectedLecture.videoUrl)}
                     controls={true}
+                    config={YOUTUBE_PLAYER_CONFIG}
                     className="aspect-video"
                   />
                 ) : (

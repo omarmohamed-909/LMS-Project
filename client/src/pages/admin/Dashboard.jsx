@@ -12,7 +12,7 @@ import {
   GraduationCap,
   Users,
 } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -26,6 +26,21 @@ import {
 } from "recharts";
 
 const Dashboard = () => {
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window === "undefined" ? true : window.innerWidth >= 640
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 640);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const {
     data: coursesData,
     isLoading: isCoursesLoading,
@@ -263,8 +278,9 @@ const Dashboard = () => {
                   ))}
                 </div>
 
-                <div className="hidden h-[320px] sm:block">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="hidden h-80 sm:block min-w-0">
+                  {isDesktop ? (
+                  <ResponsiveContainer width="100%" height="100%" minWidth={320} minHeight={300}>
                     <LineChart data={coursePriceChartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                       <XAxis
@@ -294,6 +310,7 @@ const Dashboard = () => {
                       />
                     </LineChart>
                   </ResponsiveContainer>
+                  ) : null}
                 </div>
               </>
             )}
@@ -338,8 +355,9 @@ const Dashboard = () => {
                   ))}
                 </div>
 
-                <div className="hidden h-[320px] sm:block">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="hidden h-80 sm:block min-w-0">
+                  {isDesktop ? (
+                  <ResponsiveContainer width="100%" height="100%" minWidth={320} minHeight={300}>
                     <BarChart data={creatorDistributionData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                       <XAxis dataKey="name" stroke="#64748b" interval={0} />
@@ -355,6 +373,7 @@ const Dashboard = () => {
                       <Bar dataKey="count" fill="#0f766e" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
+                  ) : null}
                 </div>
               </>
             )}
