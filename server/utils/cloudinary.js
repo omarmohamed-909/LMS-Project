@@ -26,28 +26,70 @@ if (hasExplicitCloudinaryConfig) {
         api_key: cloudinaryConfig.api_key,
         api_secret: cloudinaryConfig.api_secret,
         cloud_name: cloudinaryConfig.cloud_name,
+        secure: true,
     });
+} else if (hasCloudinaryUrl) {
+    cloudinary.config({ secure: true });
 }
 
-export const uploadMedia = async (file) => {
+const ensureCloudinaryConfig = () => {
     if (!hasCloudinaryConfig) {
         throw new Error("Cloudinary is not configured");
     }
+};
+
+const uploadBufferWithStream = (fileBuffer, options = {}) =>
+    new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                resource_type: "auto",
+                ...options,
+            },
+            (error, result) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+
+                resolve(result);
+            }
+        );
+
+        uploadStream.end(fileBuffer);
+    });
+
+export const uploadMedia = async (file, options = {}) => {
+    ensureCloudinaryConfig();
 
     try {
-        // Convert Buffer (memoryStorage) to base64 data URI — works reliably on Vercel serverless.
-        const uploadSource = Buffer.isBuffer(file)
-            ? `data:application/octet-stream;base64,${file.toString("base64")}`
-            : file;
+        if (Buffer.isBuffer(file)) {
+            return await uploadBufferWithStream(file, options);
+        }
 
-        const uploadResponse = await cloudinary.uploader.upload(uploadSource, {
+        const uploadResponse = await cloudinary.uploader.upload(file, {
             resource_type: "auto",
+            ...options,
         });
         return uploadResponse;
     } catch (error) {
         console.error("Cloudinary upload error:", error?.message || error);
         throw new Error("Media upload failed");
     }
+};
+
+export const createCloudinaryUploadSignature = (paramsToSign = {}) => {
+    ensureCloudinaryConfig();
+
+    const signature = cloudinary.utils.api_sign_request(
+        paramsToSign,
+        cloudinaryConfig.api_secret || cloudinary.config().api_secret
+    );
+
+    return {
+        signature,
+        apiKey: cloudinaryConfig.api_key || cloudinary.config().api_key,
+        cloudName: cloudinaryConfig.cloud_name || cloudinary.config().cloud_name,
+    };
 };
 
 export const deleteMediaFromCloudinary = async(publicId)=>{

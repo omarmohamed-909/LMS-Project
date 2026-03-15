@@ -19,7 +19,18 @@ import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const MEDIA_API = "https://lms-project-steel-pi.vercel.app/api/v1/media";
+const AUTH_TOKEN_KEY = "lms_auth_token";
 const YOUTUBE_URL_PATTERN = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i;
+
+const getAuthHeaders = () => {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  const token = window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 const LectureTab = () => {
   const [lectureTitle, setLectureTitle] = useState("");
@@ -77,34 +88,58 @@ const LectureTab = () => {
   const fileChangeHandler = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
       setMediaProgress(true);
       setIsProcessingVideo(false);
       setUploadProgress(0);
       try {
-        const res = await axios.post(`${MEDIA_API}/upload-video`, formData, {
+        const signatureResponse = await axios.post(
+          `${MEDIA_API}/upload-video-signature`,
+          {},
+          {
+            headers: getAuthHeaders(),
+          }
+        );
+
+        const { apiKey, cloudName, folder, signature, timestamp } =
+          signatureResponse.data.data;
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("api_key", apiKey);
+        formData.append("folder", folder);
+        formData.append("signature", signature);
+        formData.append("timestamp", timestamp);
+
+        const res = await axios.post(
+          `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
+          formData,
+          {
           onUploadProgress: ({ loaded, total }) => {
-            const progressValue = Math.round((loaded * 100) / total);
+            const safeTotal = total || file.size || loaded || 1;
+            const progressValue = Math.round((loaded * 100) / safeTotal);
             setUploadProgress(progressValue);
             if (progressValue >= 100) {
               setIsProcessingVideo(true);
             }
           },
-        });
+          }
+        );
 
-        if (res.data.success) {
-          console.log(res);
+        if (res.data.secure_url) {
           setUploadVideoInfo({
-            videoUrl: res.data.data.url,
-            publicId: res.data.data.public_id,
+            videoUrl: res.data.secure_url,
+            publicId: res.data.public_id,
           });
           setYoutubeUrl("");
-          toast.success(res.data.message);
+          toast.success("video uploaded successfully");
         }
       } catch (error) {
         console.log(error);
-        toast.error("video upload failed");
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.response?.data?.error?.message ||
+          "video upload failed";
+        toast.error(errorMessage);
       } finally {
         setIsProcessingVideo(false);
         setMediaProgress(false);
