@@ -34,27 +34,13 @@ export const uploadMedia = async (file) => {
         throw new Error("Cloudinary is not configured");
     }
 
-    // file can be a Buffer (memoryStorage) or a path string (legacy)
-    if (Buffer.isBuffer(file)) {
-        return new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream(
-                { resource_type: "auto" },
-                (error, result) => {
-                    if (error) {
-                        console.error("Cloudinary upload error:", error?.message || error);
-                        reject(new Error("Media upload failed"));
-                    } else {
-                        resolve(result);
-                    }
-                }
-            );
-            stream.end(file);
-        });
-    }
-
-    // Legacy path string
     try {
-        const uploadResponse = await cloudinary.uploader.upload(file, {
+        // Convert Buffer (memoryStorage) to base64 data URI — works reliably on Vercel serverless.
+        const uploadSource = Buffer.isBuffer(file)
+            ? `data:application/octet-stream;base64,${file.toString("base64")}`
+            : file;
+
+        const uploadResponse = await cloudinary.uploader.upload(uploadSource, {
             resource_type: "auto",
         });
         return uploadResponse;
