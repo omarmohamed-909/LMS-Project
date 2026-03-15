@@ -323,6 +323,9 @@ const CourseProgress = () => {
     const canDelete =
       user?._id === comment.userId?._id || user?.role === "instructor";
     const canPin = user?.role === "instructor" && !comment.parentCommentId;
+    const isNested = depth > 0;
+    const normalizedDepth = Math.min(depth, 6);
+    const depthOffset = normalizedDepth * 16;
     const commenterName = comment.userId?.name || "User";
     const commenterInitials = commenterName
       .split(" ")
@@ -333,29 +336,36 @@ const CourseProgress = () => {
     const isReplying = activeReplyFor === comment._id;
 
     return (
-      <div
-        key={comment._id}
-        className={`rounded-2xl border bg-white p-4 shadow-[0_10px_25px_-20px_rgba(15,23,42,0.6)] transition hover:border-slate-300 dark:bg-slate-950 dark:hover:border-slate-700 ${
-          comment.isPinned
-            ? "border-amber-300/90 ring-1 ring-amber-200 dark:border-amber-400/40 dark:ring-amber-500/20"
-            : "border-slate-200 dark:border-slate-800"
-        }`}
-        style={{ marginLeft: depth ? `${Math.min(depth, 6) * 14}px` : 0 }}
-      >
+      <div key={comment._id} className="relative" style={{ marginLeft: depthOffset }}>
+        {isNested && (
+          <>
+            <span className="absolute -left-4 top-0 h-full w-px bg-slate-200 dark:bg-slate-700" />
+            <span className="absolute -left-4 top-6 h-px w-4 bg-slate-300 dark:bg-slate-600" />
+          </>
+        )}
+        <div
+          className={`rounded-2xl border bg-white shadow-[0_10px_25px_-20px_rgba(15,23,42,0.6)] transition hover:border-slate-300 dark:bg-slate-950 dark:hover:border-slate-700 ${
+            isNested ? "p-3.5" : "p-4"
+          } ${
+            comment.isPinned
+              ? "border-amber-300/90 ring-1 ring-amber-200 dark:border-amber-400/40 dark:ring-amber-500/20"
+              : "border-slate-200 dark:border-slate-800"
+          }`}
+        >
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <Avatar className="h-10 w-10 shrink-0 ring-2 ring-slate-200 dark:ring-slate-700">
+            <Avatar className={`${isNested ? "h-8 w-8" : "h-10 w-10"} shrink-0 ring-2 ring-slate-200 dark:ring-slate-700`}>
               <AvatarImage
                 src={comment.userId?.photoUrl || "https://github.com/shadcn.png"}
                 alt={commenterName}
               />
-              <AvatarFallback className="text-xs font-semibold uppercase">
+              <AvatarFallback className={`${isNested ? "text-[10px]" : "text-xs"} font-semibold uppercase`}>
                 {commenterInitials}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <p className={`truncate ${isNested ? "text-[13px]" : "text-sm"} font-semibold text-slate-900 dark:text-slate-100`}>
                   {commenterName}
                 </p>
                 {comment.isPinned && !comment.parentCommentId && (
@@ -364,7 +374,7 @@ const CourseProgress = () => {
                   </Badge>
                 )}
               </div>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className={`${isNested ? "mt-0.5 text-[11px]" : "mt-1 text-xs"} text-slate-500 dark:text-slate-400`}>
                 {new Date(comment.createdAt).toLocaleString()}
               </p>
             </div>
@@ -402,7 +412,7 @@ const CourseProgress = () => {
           </div>
         </div>
 
-        <p className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50 px-3 py-2.5 text-sm leading-6 text-slate-700 dark:bg-slate-900 dark:text-slate-300">
+        <p className={`mt-3 whitespace-pre-wrap rounded-xl bg-slate-50 px-3 py-2.5 ${isNested ? "text-[13px] leading-5" : "text-sm leading-6"} text-slate-700 dark:bg-slate-900 dark:text-slate-300`}>
           {comment.replyToUserId?.name ? `@${comment.replyToUserId.name} ` : ""}
           {comment.text}
         </p>
@@ -460,10 +470,11 @@ const CourseProgress = () => {
         )}
 
         {children.length > 0 && (
-          <div className="mt-3 space-y-2.5 border-l-2 border-slate-200 pl-3 dark:border-slate-700">
+          <div className="mt-3 space-y-2.5">
             {children.map((childComment) => renderCommentNode(childComment, depth + 1))}
           </div>
         )}
+        </div>
       </div>
     );
   };
