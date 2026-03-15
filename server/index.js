@@ -23,6 +23,17 @@ app.use("/api/v1/purchase/webhook", express.raw({ type: "application/json" }))
 app.use(express.json())
 app.use(cookieParser())
 
+// Ensure DB is connected on every request (serverless-safe)
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error("DB connection failed for request:", req.path, err.message);
+        return res.status(503).json({ success: false, message: "Service temporarily unavailable. Please try again shortly." });
+    }
+})
+
 const envOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || "")
     .split(",")
     .map((origin) => origin.trim())
