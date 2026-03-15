@@ -19,7 +19,13 @@ import ReactPlayer from "react-player";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
-const MEDIA_API = "https://lms-project-steel-pi.vercel.app/api/v1/media";
+const DEFAULT_API_BASE_URL =
+  typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+    ? "http://localhost:8080"
+    : "https://lms-project-steel-pi.vercel.app";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
+const MEDIA_API = `${API_BASE_URL}/api/v1/media`;
 const AUTH_TOKEN_KEY = "lms_auth_token";
 const YOUTUBE_URL_PATTERN = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i;
 const YOUTUBE_PLAYER_CONFIG = {
