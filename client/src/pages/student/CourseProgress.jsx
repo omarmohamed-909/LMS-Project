@@ -15,6 +15,7 @@ import {
   useUpdateLectureProgressMutation,
   useSubmitQuizResultMutation,
 } from "@/features/api/courseProgressApi";
+import { secureMediaUrl } from "@/lib/secureMediaUrl";
 import { useSelector } from "react-redux";
 import { CheckCircle, CheckCircle2, CirclePlay, CornerDownRight, ListChecks, MessageSquare, Pin, PinOff, PlayCircle, Send, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -677,7 +678,7 @@ const CourseProgress = () => {
             {contentViewMode === "video" ? (
               <div className="overflow-hidden rounded-2xl bg-black shadow-sm">
                 <ReactPlayer
-                  src={activeLecture?.videoUrl}
+                  src={secureMediaUrl(activeLecture?.videoUrl)}
                   controls
                   width="100%"
                   height="100%"

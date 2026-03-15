@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { useEditLectureMutation, useGetLectureByIdQuery, useRemoveLectureMutation, useUpdateLectureQuizMutation } from "@/features/api/courseApi";
+import { secureMediaUrl } from "@/lib/secureMediaUrl";
 import axios from "axios";
 import { CheckCircle2, Link2, Loader2, Lock, PlayCircle, Plus, Trash2, UploadCloud, Video } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -58,12 +59,12 @@ const LectureTab = () => {
       setUploadVideoInfo(
         lecture.videoUrl
           ? {
-              videoUrl: lecture.videoUrl,
+              videoUrl: secureMediaUrl(lecture.videoUrl),
               publicId: lecture.publicId || "",
             }
           : null
       );
-      setYoutubeUrl(lecture.publicId ? "" : lecture.videoUrl || "");
+      setYoutubeUrl(lecture.publicId ? "" : secureMediaUrl(lecture.videoUrl || ""));
       setQuizQuestions(
         Array.isArray(lecture.quizQuestions)
           ? lecture.quizQuestions.map((item) => ({
@@ -155,7 +156,7 @@ const LectureTab = () => {
       setUploadVideoInfo(
         lecture?.videoUrl
           ? {
-              videoUrl: lecture.videoUrl,
+              videoUrl: secureMediaUrl(lecture.videoUrl),
               publicId: lecture.publicId || "",
             }
           : null
@@ -612,7 +613,7 @@ const LectureTab = () => {
                 </div>
                 <div className="mb-3 overflow-hidden rounded-2xl bg-black">
                   <ReactPlayer
-                    src={uploadVideInfo.videoUrl}
+                    src={secureMediaUrl(uploadVideInfo.videoUrl)}
                     controls
                     width="100%"
                     height="100%"

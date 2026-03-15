@@ -15,6 +15,7 @@ import {
   useVerifyCheckoutSessionMutation,
 } from "@/features/api/purchaseApi";
 import { useGetCourseByIdQuery, useGetPublishedCourseQuery } from "@/features/api/courseApi";
+import { secureMediaUrl } from "@/lib/secureMediaUrl";
 
 import {
   BadgeInfo,
@@ -283,7 +284,7 @@ const CourseDetail = () => {
                   <ReactPlayer
                     width="100%"
                     height={"100%"}
-                    src={selectedLecture.videoUrl}
+                    src={secureMediaUrl(selectedLecture.videoUrl)}
                     controls={true}
                     className="aspect-video"
                   />

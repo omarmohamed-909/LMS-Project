@@ -2,34 +2,74 @@ import { v2 as cloudinary } from 'cloudinary';
 import dotenv from "dotenv";
 dotenv.config({});
 
-const cloudinaryConfig = {
-    api_key: process.env.CLOUDINARY_API_KEY || process.env.API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET || process.env.API_SECRET,
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUD_NAME,
+const parseCloudinaryUrl = (cloudinaryUrl) => {
+    if (!cloudinaryUrl) {
+        return null;
+    }
+
+    try {
+        const parsedUrl = new URL(cloudinaryUrl);
+
+        return {
+            api_key: decodeURIComponent(parsedUrl.username || ""),
+            api_secret: decodeURIComponent(parsedUrl.password || ""),
+            cloud_name: parsedUrl.hostname || "",
+        };
+    } catch (error) {
+        console.error("Invalid CLOUDINARY_URL:", error?.message || error);
+        return null;
+    }
 };
 
-const hasCloudinaryUrl = Boolean(process.env.CLOUDINARY_URL);
-const hasExplicitCloudinaryConfig =
-    Boolean(cloudinaryConfig.api_key) &&
-    Boolean(cloudinaryConfig.api_secret) &&
-    Boolean(cloudinaryConfig.cloud_name);
+const specificCloudinaryConfig = {
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+};
+
+const legacyCloudinaryConfig = {
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET,
+    cloud_name: process.env.CLOUD_NAME,
+};
+
+const cloudinaryUrlConfig = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
+
+const hasCloudinaryUrl =
+    Boolean(cloudinaryUrlConfig?.api_key) &&
+    Boolean(cloudinaryUrlConfig?.api_secret) &&
+    Boolean(cloudinaryUrlConfig?.cloud_name);
+
+const hasSpecificCloudinaryConfig =
+    Boolean(specificCloudinaryConfig.api_key) &&
+    Boolean(specificCloudinaryConfig.api_secret) &&
+    Boolean(specificCloudinaryConfig.cloud_name);
+
+const hasLegacyCloudinaryConfig =
+    Boolean(legacyCloudinaryConfig.api_key) &&
+    Boolean(legacyCloudinaryConfig.api_secret) &&
+    Boolean(legacyCloudinaryConfig.cloud_name);
+
+const cloudinaryConfig = hasCloudinaryUrl
+    ? cloudinaryUrlConfig
+    : hasSpecificCloudinaryConfig
+        ? specificCloudinaryConfig
+        : legacyCloudinaryConfig;
 
 const hasCloudinaryConfig =
-    hasExplicitCloudinaryConfig || hasCloudinaryUrl;
+    hasCloudinaryUrl || hasSpecificCloudinaryConfig || hasLegacyCloudinaryConfig;
 
 if (!hasCloudinaryConfig) {
     console.error("Cloudinary config missing. Set CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET on deployment.");
 }
 
-if (hasExplicitCloudinaryConfig) {
+if (hasCloudinaryConfig) {
     cloudinary.config({
         api_key: cloudinaryConfig.api_key,
         api_secret: cloudinaryConfig.api_secret,
         cloud_name: cloudinaryConfig.cloud_name,
         secure: true,
     });
-} else if (hasCloudinaryUrl) {
-    cloudinary.config({ secure: true });
 }
 
 const ensureCloudinaryConfig = () => {
@@ -82,13 +122,13 @@ export const createCloudinaryUploadSignature = (paramsToSign = {}) => {
 
     const signature = cloudinary.utils.api_sign_request(
         paramsToSign,
-        cloudinaryConfig.api_secret || cloudinary.config().api_secret
+        cloudinary.config().api_secret
     );
 
     return {
         signature,
-        apiKey: cloudinaryConfig.api_key || cloudinary.config().api_key,
-        cloudName: cloudinaryConfig.cloud_name || cloudinary.config().cloud_name,
+        apiKey: cloudinary.config().api_key,
+        cloudName: cloudinary.config().cloud_name,
     };
 };
 
