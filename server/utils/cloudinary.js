@@ -15,7 +15,8 @@ export const uploadMedia = async(file)=>{
         });
         return uploadResponse;
     } catch (error) {
-        console.log(error)
+        console.error("Cloudinary upload error:", error?.message || error);
+        throw new Error("Media upload failed");
     }
 }
 

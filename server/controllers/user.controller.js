@@ -216,15 +216,25 @@ export const updateProfile = async(req,res)=>{
         })
         }
         let photoUrl = user.photoUrl;
+        let photoUploadFailed = false;
 
         if(profilePhoto){
-            if(user.photoUrl){
-                const publicId = user.photoUrl.split("/").pop().split(".")[0];
-                deleteMediaFromCloudinary(publicId);
+            try {
+                const cloudResponse = await uploadMedia(profilePhoto.path);
+                if (cloudResponse?.secure_url) {
+                    // Only delete old image after the new upload succeeds.
+                    if(user.photoUrl){
+                        const publicId = user.photoUrl.split("/").pop().split(".")[0];
+                        await deleteMediaFromCloudinary(publicId);
+                    }
+                    photoUrl = cloudResponse.secure_url;
+                } else {
+                    photoUploadFailed = true;
+                }
+            } catch (uploadError) {
+                console.error("Profile photo upload failed:", uploadError?.message || uploadError);
+                photoUploadFailed = true;
             }
-
-            const cloudResponse = await uploadMedia(profilePhoto.path);
-            photoUrl = cloudResponse.secure_url;
         }
 
         const updatedData = {
@@ -275,7 +285,10 @@ export const updateProfile = async(req,res)=>{
         return res.status(200).json({
             success:true,
             user:updatedUser,
-            message:"Profile updated successfully",
+            message: photoUploadFailed
+                ? "Profile updated, but profile photo could not be uploaded right now."
+                : "Profile updated successfully",
+            photoUploadFailed,
         })
         
 
