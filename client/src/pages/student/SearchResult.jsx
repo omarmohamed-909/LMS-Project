@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { secureMediaUrl } from "@/lib/secureMediaUrl";
 import React from "react";
 import { Link } from "react-router-dom";
 
@@ -15,7 +16,7 @@ const SearchResult = ({ course }) => {
         className="flex w-full flex-col gap-4 md:flex-row"
       >
         <img
-          src={course.courseThumbnail}
+          src={secureMediaUrl(course.courseThumbnail)}
           alt="course-thumbnial"
           className="h-40 w-full rounded-2xl object-cover md:h-32 md:w-56"
         />

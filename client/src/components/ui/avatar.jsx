@@ -2,6 +2,7 @@ import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
 import { cn } from "@/lib/utils"
+import { secureMediaUrl } from "@/lib/secureMediaUrl"
 
 function Avatar({
   className,
@@ -17,12 +18,16 @@ function Avatar({
 
 function AvatarImage({
   className,
+  src,
   ...props
 }) {
+  const safeSrc = secureMediaUrl(src)
+
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
       className={cn("aspect-square size-full", className)}
+      src={safeSrc}
       {...props} />
   );
 }

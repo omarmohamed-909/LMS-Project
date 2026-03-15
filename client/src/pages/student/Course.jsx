@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { secureMediaUrl } from "@/lib/secureMediaUrl";
 import { ArrowUpRight, CircleDollarSign, Layers3 } from "lucide-react";
 import React from "react";
 import { Link } from "react-router-dom";
@@ -16,7 +17,7 @@ const Course = ({course}) => {
     <Card className="group flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-950">
       <div className="relative overflow-hidden">
         <img
-          src={course.courseThumbnail}
+          src={secureMediaUrl(course.courseThumbnail)}
           alt="course"
           className="block h-40 w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
