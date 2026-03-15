@@ -41,12 +41,14 @@ const envOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || "")
 
 const allowedOrigins = [
     ...envOrigins,
+    "https://e-learning-omar.vercel.app",
     "https://lms-project-jczd.vercel.app",
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "http://localhost:3000"
 ]
 
 const isAllowedVercelPreview = (origin) =>
-    /^https:\/\/lms-project-[a-z0-9-]+\.vercel\.app$/i.test(origin)
+    /^https:\/\/(?:lms-project|e-learning-omar)-[a-z0-9-]+\.vercel\.app$/i.test(origin)
 
 app.use(cors({
     origin: (origin, callback) => {
