@@ -120,21 +120,29 @@ VITE_STRIPE_PUBLIC_KEY=your_stripe_public_key
 
 ```
 e-learning-platform/
-├── client/                 # React frontend
+├── client/                 # React frontend (Vite)
 │   ├── src/
+│   │   ├── app/            # App-level logic / Providers
+│   │   ├── assets/         # Static files (Images, fonts)
 │   │   ├── components/     # Reusable UI components
+│   │   ├── features/       # Feature-based logic & slices
+│   │   ├── layout/         # Main layout wrappers (Navbar, Sidebar)
+│   │   ├── lib/            # Utilities, API config & Axios
 │   │   ├── pages/          # Route-level pages
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── store/          # State management
-│   │   └── lib/            # Utilities & API calls
+│   │   ├── App.jsx         # Main React component
+│   │   └── main.jsx        # Frontend entry point
 │   └── vite.config.js
 │
 └── server/                 # Express backend
-    ├── controllers/        # Route handlers
+    ├── controllers/        # Route handlers logic
+    ├── database/           # DB connection & configuration
+    ├── middlewares/        # Custom Express middlewares (Auth, Errors)
     ├── models/             # Mongoose schemas
-    ├── routes/             # API routes
-    ├── middleware/         # Auth, error handling, etc.
-    └── utils/              # Helper functions
+    ├── routes/             # API route definitions
+    ├── uploads/            # Local file uploads directory
+    ├── utils/              # Helper functions
+    ├── index.js            # Server entry point
+    └── vercel.json         # Vercel deployment config
 ```
 
 ---
