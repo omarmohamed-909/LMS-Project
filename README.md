@@ -1,8 +1,9 @@
 # 🎓 E-Learning Platform
 
-![E-Learning Platform Homepage](./hero-section.png)
 
 A full-stack Learning Management System (LMS) built from scratch with a modern tech stack. Designed to deliver a seamless experience for both students and instructors, with a strong focus on UI/UX, security, and performance.
+
+![E-Learning Platform Homepage](./hero-section.png)
 
 🔗 **Live Demo:** [e-learning-omar.vercel.app](https://e-learning-omar.vercel.app/)
 
