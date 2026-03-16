@@ -32,6 +32,7 @@ const allowedOrigins = [
     ...envOrigins,
     "https://e-learning-omar.vercel.app",
     "https://lms-project-jczd.vercel.app",
+    "https://lms-project-steel-pi.vercel.app",
     "http://localhost:5173",
     "http://localhost:3000"
 ]
