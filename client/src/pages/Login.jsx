@@ -1,5 +1,3 @@
-//omar12345
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -70,6 +68,14 @@ const Login = () => {
   };
 
   const handlerRegistration = async (type) => {
+    if (type === "signup") {
+      // Password strength validation
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      if (!passwordRegex.test(signupInput.password)) {
+        toast.error("Password must be at least 8 characters long, and include an uppercase letter, a lowercase letter, and a number.");
+        return;
+      }
+    }
     const inputData = type === "signup" ? signupInput : loginInput;
     const action = type === "signup" ? registerUser : loginUser;
     await action(inputData);
@@ -178,6 +184,7 @@ const Login = () => {
                       )}
                     </button>
                   </div>
+                  <p className="text-xs text-slate-400 mt-1">Password must be at least 8 characters long, and include an uppercase letter, a lowercase letter, and a number.</p>
                 </div>
               </CardContent>
               <CardFooter className="flex-col items-stretch gap-3">
