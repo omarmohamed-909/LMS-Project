@@ -1,5 +1,7 @@
 # 🎓 E-Learning Platform
 
+![E-Learning Platform Homepage](./hero-section.png)
+
 A full-stack Learning Management System (LMS) built from scratch with a modern tech stack. Designed to deliver a seamless experience for both students and instructors, with a strong focus on UI/UX, security, and performance.
 
 🔗 **Live Demo:** [e-learning-omar.vercel.app](https://e-learning-omar.vercel.app/)
@@ -70,7 +72,7 @@ A full-stack Learning Management System (LMS) built from scratch with a modern t
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/e-learning-platform.git
+git clone https://github.com/omarmohamed-909/e-learning-platform.git
 cd e-learning-platform
 ```
 
